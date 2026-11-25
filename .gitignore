@@ -1,0 +1,7 @@
+node_modules/
+tools/out/
+*.png
+.DS_Store
+.vercel
+*.zip
+*:Zone.Identifier

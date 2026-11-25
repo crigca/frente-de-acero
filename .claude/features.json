@@ -1,0 +1,81 @@
+{
+  "roadmap": "Etapa 0 publicar -> Etapa 1 cerebro TS -> Etapa 2 cuentas y puntos -> Etapa 3 multijugador tiempo real",
+  "features": [
+    {
+      "id": "e0-tests",
+      "etapa": 0,
+      "title": "Verificar tests antes de publicar",
+      "status": "done",
+      "acceptance": [
+        "bash tests/todas.sh corre y se lee la salida",
+        "No hay fichas superpuestas, pilas de mas de 3, ni fichas a mitad de camino",
+        "Los 20 mapas validan en las 3 proporciones"
+      ]
+    },
+    {
+      "id": "e0-git-init",
+      "etapa": 0,
+      "title": "Inicializar repo git y primer commit",
+      "status": "pending",
+      "acceptance": [
+        "git init hecho en ~/frente-de-acero",
+        "Primer commit con conventional commits",
+        "Lo ejecuta Cristian; Claude deja los comandos"
+      ]
+    },
+    {
+      "id": "e0-github-push",
+      "etapa": 0,
+      "title": "Crear repo en GitHub y push",
+      "status": "pending",
+      "acceptance": [
+        "Repo creado en GitHub",
+        "Push de la rama inicial con git puro (sin PRs ni gh CLI)"
+      ]
+    },
+    {
+      "id": "e0-vercel-deploy",
+      "etapa": 0,
+      "title": "Conectar Vercel para deploy",
+      "status": "pending",
+      "acceptance": [
+        "Proyecto Vercel conectado al repo de GitHub",
+        "La raiz del sitio abre frente-de-acero.html (via vercel.json)",
+        "Deploy de produccion verde"
+      ]
+    },
+    {
+      "id": "e1-cerebro-ts",
+      "etapa": 1,
+      "title": "Extraer la logica del juego a modulo TypeScript puro",
+      "status": "pending",
+      "acceptance": [
+        "Reglas de combate, oro y movimiento en TS sin DOM ni canvas",
+        "Reutilizable en cliente y servidor",
+        "El single-player sigue jugandose igual que antes"
+      ]
+    },
+    {
+      "id": "e2-cuentas-puntos",
+      "etapa": 2,
+      "title": "Registro, login y puntos (backend)",
+      "status": "pending",
+      "acceptance": [
+        "Backend NestJS + PostgreSQL/TypeORM",
+        "Registro/login con Google (OAuth2 + JWT)",
+        "Guardar y mostrar puntos/ranking"
+      ]
+    },
+    {
+      "id": "e3-multijugador",
+      "etapa": 3,
+      "title": "Multijugador en tiempo real sincronizado",
+      "status": "pending",
+      "acceptance": [
+        "Servidor arbitro (server-authoritative)",
+        "Sincronizacion de dos pantallas por WebSockets",
+        "Simulacion determinista coherente entre cliente y servidor"
+      ]
+    }
+  ]
+}

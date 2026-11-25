@@ -1,0 +1,2322 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Frente de Acero</title>
+<style>
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;overflow:hidden;background:#0c100f;color:#e8ebf2;font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif}
+  body{display:flex;justify-content:center;padding:3px}
+  #main{display:flex;flex-direction:column;gap:3px;min-width:290px;width:100%;height:100%}
+  /* ---- Panel de mando, estilo Segunda Guerra: chapa verde oliva remachada, letras de esténcil, fichas de papel caqui ---- */
+  #handle{flex:0 0 auto;height:15px;line-height:15px;text-align:center;font:700 10px "Courier New",Courier,monospace;letter-spacing:2px;text-transform:uppercase;color:#cfc9a4;background:#2f3524;border:1px solid #14170f;border-radius:2px;cursor:pointer;user-select:none}
+  #handle:hover{background:#414a31;color:#fff}
+  /* con el panel oculto, la tirita muestra el oro y el territorio */
+  #hStats{display:none}
+  #handle.mini{height:26px;line-height:24px;display:flex;justify-content:center;align-items:center;gap:22px;font-size:11px}
+  #handle.mini #hStats{display:inline-flex;gap:18px;font-size:14px;letter-spacing:1px}
+  #hStats b{font-size:17px}
+  #hStats .hg{color:#ffd866} #hStats .hb{color:#9cc4f5} #hStats .hr{color:#f0a399}
+  #panel{display:flex;flex-direction:column;gap:4px;flex:0 0 auto;padding:5px 6px 6px;border:2px solid #14170f;border-radius:3px;
+         background:repeating-linear-gradient(0deg,rgba(0,0,0,.07) 0 1px,transparent 1px 4px),linear-gradient(#4d5638,#343b26);
+         box-shadow:inset 0 1px 0 rgba(255,255,255,.14),inset 0 -2px 0 rgba(0,0,0,.35)}
+  #panel.hidden{display:none}
+  #hud{display:flex;align-items:stretch;gap:6px;font-size:12px;height:84px;flex:0 0 auto;font-family:"Courier New",Courier,monospace}
+  #mm{height:84px;width:84px;flex:0 0 auto;border-radius:2px;border:2px solid #14170f;outline:2px solid #8a8455;outline-offset:-4px;background:#1b241e;cursor:pointer;touch-action:none}
+  .sten{font-family:"Stencil","Stencil Std","Impact","Haettenschweiler","Arial Narrow Bold","Arial Black",sans-serif;font-weight:400;letter-spacing:1.5px;text-transform:uppercase}
+  /* fichas de papel con una franja del color del bando */
+  .side{position:relative;flex:1.5 1 150px;padding:5px 10px;font-size:11.5px;border-radius:2px;line-height:1.65;white-space:nowrap;overflow:hidden;display:flex;flex-direction:column;justify-content:center;
+        color:#2a2618;font-weight:700;border:1px solid #14170f;
+        background:repeating-linear-gradient(0deg,rgba(90,70,30,.08) 0 1px,transparent 1px 3px),linear-gradient(#ddd2a6,#c4b684);
+        box-shadow:inset 0 0 14px rgba(80,60,20,.35)}
+  .side b{font-size:13px;letter-spacing:.5px}
+  .side .big{font-size:23px;line-height:1;vertical-align:-1px}
+  .side .who{font-size:15px}
+  .blue{border-left:9px solid #2f5f9e}
+  .blue .who,.blue .big{color:#1f477d}
+  .red{border-right:9px solid #a3352b;align-items:flex-end;text-align:right}
+  .red .who,.red .big{color:#8a2219}
+  /* instrumentos: oro y reloj como diales negros */
+  .mid,#goldBox{border-radius:2px;border:2px solid #14170f;background:radial-gradient(ellipse at 50% 30%,#2c3028,#12140f);box-shadow:inset 0 0 0 2px #6f6a45,inset 0 0 12px #000}
+  .mid{min-width:120px;text-align:center;padding:2px 8px;display:flex;flex-direction:column;justify-content:center}
+  #goldBox{display:flex;align-items:center;gap:8px;padding:0 12px;color:#e9c46a;font-size:16px;white-space:nowrap}
+  #goldBox span{font-size:30px;letter-spacing:0;min-width:2.2em;text-align:right;color:#ffd866;text-shadow:0 0 8px rgba(255,200,60,.45)}
+  #clock{font-size:23px;color:#e8e2c0;line-height:1.15}
+  #status{font-size:10.5px;color:#b9b58f;font-weight:700}
+  #bar{height:7px;border-radius:1px;background:#a3352b;overflow:hidden;border:1px solid #14170f;box-shadow:inset 0 1px 2px rgba(0,0,0,.6)}
+  #barBlue{height:100%;width:50%;background:#2f5f9e;border-right:2px solid #e8e2c0}
+  #controls{display:flex;gap:6px;flex:1 1 290px}
+  #menuWrap{position:relative;flex:1;display:flex}
+  #btnMenu{flex:1}
+  #menuPop{position:absolute;bottom:calc(100% + 10px);right:0;display:none;flex-direction:column;gap:6px;min-width:210px;padding:8px;border-radius:3px;background:linear-gradient(#4d5638,#343b26);border:2px solid #14170f;box-shadow:inset 0 1px 0 rgba(255,255,255,.14),0 6px 18px rgba(0,0,0,.65);z-index:5}
+  #menuPop.open{display:flex}
+  #mapGrid{display:grid;grid-template-columns:repeat(5,1fr);gap:4px}
+  #menuPop #mapGrid button{padding:7px 0;text-align:center;font-size:13px;background:linear-gradient(#5d6744,#3c442b)}
+  #menuPop #mapGrid button.cur{background:linear-gradient(#c9a13a,#93711c);color:#1d1705;text-shadow:none}
+  #menuPop button{padding:10px 12px;font-size:14px;text-align:left}
+  /* botones: chapa pintada con cuatro remaches */
+  button{font-family:"Stencil","Stencil Std","Impact","Haettenschweiler","Arial Narrow Bold","Arial Black",sans-serif;font-weight:400;letter-spacing:1.5px;text-transform:uppercase;
+         border:2px solid #14170f;border-radius:3px;padding:4px 8px;font-size:15px;cursor:pointer;white-space:nowrap;color:#e8e2c0;text-shadow:0 1px 0 rgba(0,0,0,.6);
+         background:radial-gradient(circle at 7px 7px,#a9a57e 0 1.6px,#1a1c12 1.7px 2.6px,transparent 2.8px),radial-gradient(circle at calc(100% - 7px) 7px,#a9a57e 0 1.6px,#1a1c12 1.7px 2.6px,transparent 2.8px),
+                    radial-gradient(circle at 7px calc(100% - 7px),#a9a57e 0 1.6px,#1a1c12 1.7px 2.6px,transparent 2.8px),radial-gradient(circle at calc(100% - 7px) calc(100% - 7px),#a9a57e 0 1.6px,#1a1c12 1.7px 2.6px,transparent 2.8px),
+                    linear-gradient(var(--b1,#5d6744),var(--b2,#3c442b));
+         box-shadow:inset 0 1px 0 rgba(255,255,255,.22),inset 0 -3px 0 rgba(0,0,0,.3)}
+  button:hover{filter:brightness(1.15)}
+  button:active{box-shadow:inset 0 3px 6px rgba(0,0,0,.55);transform:translateY(1px)}
+  #btnPause{flex:1.5;font-size:17px;--b1:#c9a13a;--b2:#93711c;color:#1d1705;text-shadow:0 1px 0 rgba(255,255,255,.25)}
+  #btnPause.on{--b1:#4f8a4a;--b2:#2f5c2d;color:#f2efd8;text-shadow:0 1px 0 rgba(0,0,0,.6)}
+  #btnAtk{flex:1.3;--b1:#8c3027;--b2:#5a1a14}
+  #btnFull{flex:0 0 46px;font-size:22px;padding:0;font-family:system-ui,sans-serif;letter-spacing:0}
+  #btnAtk.on{--b1:#d8402f;--b2:#a3271b;color:#fff;outline:2px solid #e8e2c0;outline-offset:-5px}
+  /* flecha propia, para cuando el mouse está capturado en pantalla completa */
+  #fakeCur{display:none;position:fixed;left:0;top:0;width:22px;height:26px;margin:-1px 0 0 -2px;z-index:99;pointer-events:none;background:url('data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2222%22%20height%3D%2226%22%20viewBox%3D%220%200%2022%2026%22%3E%3Cpath%20d%3D%22M2%201.5v19.5l5.2-4.6%203.6%208.1%203.3-1.5-3.6-8h7z%22%20fill%3D%22%23fff%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.6%22%20stroke-linejoin%3D%22round%22/%3E%3C/svg%3E') no-repeat}
+  #fakeCur.atk{width:40px;height:40px;margin:-20px 0 0 -20px;background-image:url('data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2240%22%20height%3D%2240%22%20viewBox%3D%220%200%2040%2040%22%3E%3Cg%20fill%3D%22none%22%20stroke%3D%22%23fff%22%20stroke-width%3D%227%22%20stroke-linecap%3D%22round%22%3E%3Ccircle%20cx%3D%2220%22%20cy%3D%2220%22%20r%3D%2211%22/%3E%3Cpath%20d%3D%22M20%202v10M20%2028v10M2%2020h10M28%2020h10%22/%3E%3C/g%3E%3Cg%20fill%3D%22none%22%20stroke%3D%22%23e8170c%22%20stroke-width%3D%223.6%22%20stroke-linecap%3D%22round%22%3E%3Ccircle%20cx%3D%2220%22%20cy%3D%2220%22%20r%3D%2211%22/%3E%3Cpath%20d%3D%22M20%202v10M20%2028v10M2%2020h10M28%2020h10%22/%3E%3C/g%3E%3Ccircle%20cx%3D%2220%22%20cy%3D%2220%22%20r%3D%222.6%22%20fill%3D%22%23e8170c%22%20stroke%3D%22%23fff%22%20stroke-width%3D%221.2%22/%3E%3C/svg%3E')}
+  body.grab,body.grab *{cursor:none !important}
+  #map{position:relative;width:100%;flex:1 1 0;min-height:120px;border-radius:6px;overflow:hidden;border:2px solid #000;background:#1b241e;
+       user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;touch-action:none;-webkit-tap-highlight-color:transparent}
+  #cv{display:block;width:100%;height:100%;cursor:default;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;-webkit-user-drag:none}
+  #end{position:absolute;inset:0;background:rgba(8,10,16,.75);display:none;flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center}
+  #end h2{margin:0;font-size:46px;font-family:"Stencil","Stencil Std","Impact","Haettenschweiler","Arial Black",sans-serif;font-weight:400;letter-spacing:4px}
+  #end p{margin:0;font-size:15px}
+  #end button{--b1:#4f8a4a;--b2:#2f5c2d;font-size:18px;padding:12px 22px}
+</style>
+</head>
+<body>
+<div id="main">
+  <div id="map">
+    <canvas id="cv" width="720" height="720"></canvas>
+    <div id="fakeCur"></div>
+<div id="end"><h2 id="endTitle"></h2><p id="endText"></p><button id="btnAgain">Jugar otro mapa</button></div>
+  </div>
+  <div id="handle" title="Mostrar u ocultar el panel (tecla M)"><span id="hTxt">▾ ocultar panel (M)</span><span id="hStats"><span class="hg">ORO <b id="hGold">0</b></span><span class="hb">AZUL <b id="hBp">50%</b></span><span class="hr">ROJO <b id="hRp">50%</b></span></span></div>
+  <div id="panel">
+  <div id="bar"><div id="barBlue"></div></div>
+  <div id="hud">
+    <canvas id="mm" width="86" height="86"></canvas>
+    <div class="side blue"><span><span class="sten who">AZUL · VOS</span> &nbsp;<span class="big sten" id="bp">50%</span></span><span>Edificios <b id="bc">5</b> · <span id="bu">0/20</span> fichas</span></div>
+    <div id="goldBox" class="sten">ORO <span id="bg">0</span></div>
+    <div class="mid"><span id="clock" class="sten">0:00</span><span id="status"></span></div>
+    <div class="side red"><span><span class="sten who">ROJO · IA</span> &nbsp;<span class="big sten" id="rp">50%</span></span><span>Edificios <b id="rc">5</b> · <span id="ru">0/20</span> fichas</span></div>
+    <div id="controls">
+      <button id="btnPause">⏸ PAUSA (P)</button>
+      <button id="btnAtk">⚔ ATACAR (X)</button>
+      <button id="btnFull" title="Pantalla completa (se sale con Escape)">⛶</button>
+      <div id="menuWrap">
+        <button id="btnMenu">☰ MENÚ ▴</button>
+        <div id="menuPop">
+          <button id="btnSpeed">Velocidad ×1</button>
+          <button id="btnLevel">Dificultad: nivel 1</button>
+          <button id="btnMap">Mapa 1 de 20 ▸ siguiente</button>
+          <div id="mapGrid"></div>
+          <button id="btnRestart">↻ Reiniciar este mapa</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  </div>
+</div>
+
+<script>
+(function(){
+'use strict';
+// ---------- Constantes ----------
+var GY=14, WY=720;
+var GX=22, MID=10;                                                 // columnas (se ajustan a la ventana) y columna del medio
+function mirCol(i,j){return (j&1)?GX-2-i:GX-1-i;}                  // columna espejo, para el lado rojo
+function scCol(i){return Math.max(1,Math.round(i*GX/22));}
+function scRow(j){return Math.max(1,Math.min(GY-2,Math.round(j*(GY-1)/13)));}   // ídem para las filas, en un mapa más alto
+function oddRow(j){var r=scRow(j);return (r&1)?r:r+1;}                          // las banderas van en filas impares (quedan centradas)         // reparte las posiciones iniciales en un mapa más ancho
+var HS=WY/(GY*1.5+0.5), HW=Math.sqrt(3)*HS, WX=(GX+0.5)*HW, OY=0, NC=GX*GY, U=HS/26.2;   // U: escala de fichas y ciudades
+var BLUE=0, RED=1, NEUTRAL=-1;
+var COL=[
+  {fill:'#2f66b0',dark:'#17365f',land:'#2d5486',edge:'#4d8ad6'},
+  {fill:'#b83a2c',dark:'#6b1c14',land:'#7c3a30',edge:'#dd5546'}
+];
+var TYPES={
+  inf: {r:13,R:13*U,hp:150,dmg:4, reload:1.0,range:HW*1.12,speed:7.5*U},
+  tank:{r:16,R:16*U,hp:420,dmg:15,reload:1.3,range:HW*2.08,speed:11.5*U},
+  at:  {r:14,R:14*U,hp:135,dmg:12,reload:1.5,range:HW*2.08,speed:6*U},
+  amb: {r:13,R:13*U,hp:60, dmg:0, reload:9,  range:0,       speed:9*U},    // ambulancia/taller: no ataca, repara a las de al lado
+  art: {r:14,R:14*U,hp:95, dmg:26,reload:3.2,range:HW*3.7,minRange:HW*1.3,speed:5.5*U},   // artillería: tira lejos, no a lo que tiene pegado; ignora coberturas
+  cmd: {r:14,R:14*U,hp:170,dmg:3, reload:1.0,range:HW*1.12,speed:7.5*U}    // comandante: casi no pelea; las fichas propias a su lado pegan más
+};
+var FOOT={inf:1,cmd:1};                 // van a pie: el bosque no los frena (el resto son vehículos o piezas remolcadas)
+var CMD_BONUS=1.25, CMD_R=HW*2.12;      // con un comandante propio a 2 hexágonos o menos: +25% de daño (varios comandantes no se suman)
+// Piedra, papel o tijera: MULT[quien dispara][a quien] multiplica el daño.
+// Antitanque mata tanque, tanque mata infantería, infantería mata antitanque.
+var MULT={
+  inf: {inf:1,  tank:0.4,at:1.6,amb:1,art:1.6,cmd:1},
+  tank:{inf:1.5,tank:1,  at:0.5,amb:1,art:1.2,cmd:1.2},
+  at:  {inf:0.4,tank:3,  at:1,  amb:1,art:1,  cmd:0.4},
+  amb: {inf:0,  tank:0,  at:0,  amb:0,art:0,  cmd:0},
+  art: {inf:1,  tank:0.7,at:1.1,amb:1,art:1,  cmd:1},
+  cmd: {inf:1,  tank:0.4,at:1,  amb:1,art:1,  cmd:1}
+};
+// Qué sale de cada edificio: las máquinas, de las fábricas; la gente, del cuartel (la estrella)
+var PROD={fab:['tank','at','art'],hq:['inf','amb','cmd']};
+var QMAX=5;                                     // largo máximo de la cola de cada fábrica
+var HOSP_HEAL=0.05, HOSP_R=HW*1.12;   // el médico repara 5% de la vida por segundo a una ficha propia (de a una) de su hexágono o los contiguos
+// La IA arma su ejército con una "doctrina" que sortea en cada partida (pesos de cada tipo), y la va corrigiendo según lo que vos tengas
+var DOCTRINES=[{inf:5,at:2,tank:3},{inf:3,at:2,tank:5},{inf:4,at:4,tank:2},{inf:6,at:1,tank:3},{inf:3,at:3,tank:4}];
+var COST={inf:30,at:60,tank:150,amb:200,art:130,cmd:300}, CITY_GOLD=6;   // oro cada 10 s de cada fábrica o bandera
+var BUILD={inf:8,at:12,tank:20,amb:15,art:18,cmd:20}, CAPTURED_SLOW=2;   // segundos de fabricación; en una fábrica tomada al enemigo se tarda el doble
+// Niveles de dificultad de la IA. think: cada cuántos segundos decide; wait: cuánto espera para su primer ataque; cool: pausa entre oleadas;
+// caps: fichas sueltas que manda a la vez a tomar lugares; wave: tamaño de la oleada;
+// focus: sus fichas concentran el fuego en el enemigo más dañado; heal: retira a las fichas malheridas para que las cure el médico
+// y arma las oleadas mezclando tipos. La IA NO recibe oro de más en ningún nivel: cobra con las mismas reglas que el jugador.
+var LEVELS={1:{think:4,wait:45,cool:45,caps:2,wave:5,focus:false,heal:false},
+            2:{think:2.5,wait:20,cool:25,caps:3,wave:7,focus:true,heal:false},
+            3:{think:1.5,wait:10,cool:15,caps:4,wave:9,focus:true,heal:true}};
+var level=1;
+var SUPPLY=5, CAP_TIME=6, FORT=0.5;   // FORT: las fichas dentro de su fábrica reciben 50% menos de daño
+var STACK=3;     // máximo de fichas propias apiladas en un mismo hexágono
+// Hay 20 mapas. Cada uno sale de un número (mapN) que alimenta un sorteo repetible: el mismo número da siempre el mismo mapa
+// (caminos, río, bosques, banderas y fábricas). Las fábricas ya vienen puestas, iguales en espejo para los dos bandos;
+// las 4 banderas libres no son simétricas, pero hay una de cada lado y dos por el medio. Con la del pueblo son 5.
+var MAPS=20, mapN=0, MR=Math.random;
+var FLAGS=[], FABS=[];    // hexágonos de las banderas libres y de los edificios azules: 4 fábricas y, último, el cuartel (los rojos son sus gemelos)
+// Orientación del mapa: 0 = azul a la izquierda y rojo a la derecha; 1 o -1 = frente en diagonal (azul abajo-izquierda o arriba-izquierda).
+// symK(k) da el hexágono "gemelo" del otro bando (espejo o media vuelta), y sideD(k) dice de qué lado de la línea inicial cae (>0 azul).
+var diag=0, DIAG_TILT=0.5;
+function symK(k){
+  var i=k%GX,j=Math.floor(k/GX);
+  if(diag)return (GY-1-j)*GX+(GX-1-i);
+  var mi=mirCol(i,j);return (mi>=0&&mi<GX)?j*GX+mi:k;
+}
+function sideD(k){
+  if(!diag)return hx[GX+MID]+1-hx[k];
+  return -((hx[k]-WX/2)+diag*(hy[k]-WY/2)*DIAG_TILT*WX/WY);
+}
+var TERR_GOLD=0.4;        // cada minuto, cada bando cobra un extra según su territorio: 0,4 de oro por cada 1% (50% del mapa = +20)
+function seedMap(n){
+  var a=(Math.imul(n,2654435761)^0x9e3779b9)>>>0;
+  MR=function(){a=(a+0x6D2B79F5)|0;var t=Math.imul(a^(a>>>15),1|a);t=(t+Math.imul(t^(t>>>7),61|t))^t;return ((t^(t>>>14))>>>0)/4294967296;};
+}
+
+// ---------- Tablero hexagonal ----------
+var hx, hy, nb, VX=[], VY=[];
+var own, bestD, bestT, comp, occ, cellN, cellTeam, hold;
+var terr, terrCv=null, TERR_RES=2;      // terr[k]: 0 pasto, 1 bosque. terrCv: el terreno pintado una sola vez por partida
+var FOREST_SLOW=0.55, FOREST_COVER={inf:0.7,at:0.85,tank:0.85,amb:0.85,art:0.85,cmd:0.7};   // bosque: frena a los vehículos y protege (sobre todo a la infantería)
+var lake;                     // lagunas: hexágonos de agua profunda, no se pueden cruzar ni pisar
+var TOWNS=[];                 // hexágono central de cada pueblo: el del medio y, en mapa ancho, uno más de cada lado
+var river, water, riverPath=[], town, townK=-1, RIVER_SLOW=0.4, TOWN_COVER=0.7, TOWN_GOLD=10;   // río: se cruza lento (salvo por el puente). pueblo: da cobertura y más oro
+var ownVer=0, boardCache={ver:-1}, veilCv=null, veilOwn=null, mmCv=null, mmVer=-1;   // cachés de dibujo
+var fieldN=0;
+var fieldCache={};           // rutas: mapa de costo hasta cada destino, por tipo de ficha
+var road, roadPaths=[], roadExt=[], ROAD_SPEED=1.7;   // caminos: su trazado cambia según el mapa (4 esquemas); sobre ellos las fichas van 70% más rápido
+(function(){for(var v=0;v<7;v++){var a=(60*v-30)*Math.PI/180;VX.push(Math.cos(a)*HS);VY.push(Math.sin(a)*HS);}})();
+// Arma el tablero con gx columnas (siempre par) y dibuja el mapa mapN. Se llama al empezar cada partida.
+function buildGrid(gx,gy){
+  GX=gx;GY=gy;MID=GX/2-1;WX=(GX+0.5)*HW;WY=(GY*1.5+0.5)*HS;NC=GX*GY;
+  hx=new Float32Array(NC);hy=new Float32Array(NC);nb=[];
+  for(var j=0;j<GY;j++)for(var i=0;i<GX;i++){
+    var k=j*GX+i, o=j&1;
+    hx[k]=HW*(i+0.5)+(o?HW/2:0); hy[k]=OY+HS+j*1.5*HS;
+    // vecinos: E, SE, SO, O, NO, NE (el lado d del hexágono da al vecino d)
+    var d=[[i+1,j],[i+(o?1:0),j+1],[i-(o?0:1),j+1],[i-1,j],[i-(o?0:1),j-1],[i+(o?1:0),j-1]];
+    nb.push(d.map(function(p){return (p[0]<0||p[1]<0||p[0]>=GX||p[1]>=GY)?-1:p[1]*GX+p[0];}));
+  }
+  own=new Int8Array(NC);bestD=new Float32Array(NC);bestT=new Int8Array(NC);comp=new Int32Array(NC);occ=new Array(NC);
+  cellN=new Uint8Array(NC);cellTeam=new Int8Array(NC);hold=new Int8Array(NC);
+  // Caminos y río: cadenas de hexágonos vecinos que serpentean de izquierda a derecha.
+  // Se traza la mitad izquierda y se copia en espejo, para que el mapa sea igual para los dos bandos.
+  function X(i,j){return HW*(i+0.5)+((j&1)?HW/2:0);}
+  function Y(j){return HS+j*1.5*HS;}
+  function meander(r0,amp,wl,ph){
+    var cells=[],cx=HW*GX/2,i=0,j=Math.round(r0),guard=0;
+    while(guard++<400){
+      cells.push(j*GX+i);
+      if(X(i,j)>=cx-HW/2-0.01)break;
+      var o=j&1,cand=[[i+1,j],[i+(o?1:0),j-1],[i+(o?1:0),j+1]],best=null,bd=1e18;
+      cand.forEach(function(c,m){
+        if(c[1]<1||c[1]>GY-2||c[0]>=GX)return;
+        var nx=X(c[0],c[1]);if(nx>cx+0.01)return;
+        var ty=Y(r0)+amp*1.5*HS*Math.sin(nx/(HW*wl)*2*Math.PI+ph);
+        var d=Math.abs(Y(c[1])-ty)+(m?0.01:0);
+        if(d<bd){bd=d;best=c;}
+      });
+      if(!best)break;
+      i=best[0];j=best[1];
+    }
+    var full=cells.slice();
+    for(var q=cells.length-1;q>=0;q--){
+      var jj=Math.floor(cells[q]/GX),mi=mirCol(cells[q]%GX,jj);
+      if(mi<0||mi>=GX)continue;
+      var mk=jj*GX+mi;if(mk!==full[full.length-1])full.push(mk);
+    }
+    var lk=full[full.length-1],lj=Math.floor(lk/GX);
+    if((lj&1)&&lk%GX===GX-2)full.push(lk+1);                      // en filas impares falta un hexágono para tocar el borde
+    return full;
+  }
+  terr=new Uint8Array(NC);
+  road=new Uint8Array(NC);roadPaths=[];roadExt=[];
+  river=new Uint8Array(NC);water=new Uint8Array(NC);town=new Uint8Array(NC);lake=new Uint8Array(NC);fieldCache={};
+  var tRow=oddRow(7), cxm=HW*GX/2;
+  diag=MR()<0.45?(MR()<0.5?1:-1):0;            // casi la mitad de los mapas tienen el frente en diagonal
+  function pick3(){return Math.floor(MR()*3)-1;}
+  function mirK(k){var j=Math.floor(k/GX);return j*GX+mirCol(k%GX,j);}
+  var EW=[[-HW,0],[HW,0]],NS=[[0,-1.5*HS],[0,1.5*HS]];          // hacia dónde sigue el camino al salir del mapa
+  function addRoad(p,ext){p.forEach(function(k){road[k]=1;});roadPaths.push(p);roadExt.push(ext||null);}
+  // Cadena de hexágonos de a hasta b (los dos en la mitad izquierda), serpenteando alrededor de la línea recta
+  function link(a,b,amp,wl,ph){
+    var ax=hx[a],ay=hy[a],L=Math.sqrt((hx[b]-ax)*(hx[b]-ax)+(hy[b]-ay)*(hy[b]-ay))||1,ux=(hx[b]-ax)/L,uy=(hy[b]-ay)/L,cur=a,cells=[a],g=0;
+    while(cur!==b&&g++<400){
+      var tc=(hx[cur]-ax)*ux+(hy[cur]-ay)*uy,db=Math.sqrt((hx[cur]-hx[b])*(hx[cur]-hx[b])+(hy[cur]-hy[b])*(hy[cur]-hy[b])),best=-1,bd=1e18;
+      for(var d=0;d<6;d++){
+        var n=nb[cur][d];if(n<0)continue;
+        if(n===b){best=n;break;}
+        if(hx[n]>cxm+0.01)continue;
+        var dd;
+        if(db<HW*1.7){dd=(hx[n]-hx[b])*(hx[n]-hx[b])+(hy[n]-hy[b])*(hy[n]-hy[b]);if(dd>=db*db-1)continue;}   // llegando: derecho al final
+        else{
+          var tn=(hx[n]-ax)*ux+(hy[n]-ay)*uy;if(tn<=tc+HW*0.2)continue;
+          var off=amp*HW*Math.sin(tn/(HW*wl)*6.2832+ph)*Math.sin(Math.PI*Math.max(0,Math.min(1,tn/L)));
+          var px=ax+ux*tn-uy*off,py=ay+uy*tn+ux*off;dd=(hx[n]-px)*(hx[n]-px)+(hy[n]-py)*(hy[n]-py);
+        }
+        if(dd<bd){bd=dd;best=n;}
+      }
+      if(best<0)break;
+      cur=best;cells.push(cur);
+    }
+    return cells;
+  }
+  // Camino que entra por la izquierda, llega al centro y sigue en espejo hasta la derecha
+  function across(left){
+    var full=left.slice();
+    for(var q=left.length-1;q>=0;q--){var mk=mirK(left[q]);if(mk!==full[full.length-1])full.push(mk);}
+    return full;
+  }
+  function both(p,ext){addRoad(p,ext);addRoad(p.map(mirK),ext);}       // un camino del lado izquierdo y su espejo
+  function wob(){return [0.5+MR()*0.7,4+MR()*4,MR()*6.2832];}
+  function lk(a,b){var w=wob();return link(a,b,w[0],w[1],w[2]);}
+  townK=tRow*GX+MID;
+  var layout=Math.floor(MR()*4),sideCol=Math.max(3,Math.min(MID-4,scCol(6)+pick3()));
+  var tall=GY>=34,wide=GX>=60,col2=Math.max(2,scCol(2.6)+pick3());
+  function atC(pth,col){for(var q=0;q<pth.length;q++)if(pth[q]%GX===col)return pth[q];return pth[0];}
+  if(layout===0||layout===3){
+    // dos caminos de lado a lado
+    [[scRow(4)+pick3(),MR()*6.2832],[scRow(10)+pick3(),MR()*6.2832]].forEach(function(r){
+      addRoad(meander(r[0],0.7+MR()*0.8,4.5+MR()*3.5,r[1]),EW);
+    });
+    var pA=roadPaths[0],pB=roadPaths[1];
+    var pT=pA,pD=pB;
+    if(tall){addRoad(meander(scRow(1.2)+pick3(),0.7+MR()*0.8,4.5+MR()*3.5,MR()*6.2832),EW);addRoad(meander(scRow(12.8)+pick3(),0.7+MR()*0.8,4.5+MR()*3.5,MR()*6.2832),EW);pT=roadPaths[2];pD=roadPaths[3];}   // mapa alto: dos caminos más, cerca de los bordes
+    if(wide)both(lk(atC(pT,col2),atC(pD,col2)));       // mapa ancho: otro camino de norte a sur, cerca de cada borde
+    if(layout===0){
+      // ...y uno de norte a sur por el medio, que los une y pasa por el pueblo
+      var midRow=function(pth){var rows=[];pth.forEach(function(k){if(Math.abs(hx[k]-cxm)<HW*0.6)rows.push(Math.floor(k/GX));});return rows;};
+      var jA=Math.max.apply(null,midRow(pT)), jB=Math.min.apply(null,midRow(pD)),ns=[];
+      for(var jn=jA;jn<=jB;jn++)ns.push(jn*GX+((jn&1)?MID:((jn>>1)&1?MID:MID+1)));
+      addRoad(ns);
+    }else{
+      // ...unidos por un camino de norte a sur de cada lado, con un ramal que cruza por el pueblo
+      var atCol=function(pth){for(var q=0;q<pth.length;q++)if(pth[q]%GX===sideCol)return pth[q];return pth[0];};
+      var side=lk(atCol(pT),atCol(pD));both(side);
+      var mid=side[0];side.forEach(function(k){if(Math.abs(Math.floor(k/GX)-tRow)<Math.abs(Math.floor(mid/GX)-tRow))mid=k;});
+      addRoad(across(lk(mid,townK)));
+    }
+  }else if(layout===1){
+    // cruz: un camino de lado a lado por el pueblo y uno de norte a sur de cada lado
+    addRoad(across(lk(Math.max(1,Math.min(GY-2,tRow+2*pick3()))*GX,townK)),EW);
+    both(lk(sideCol,(GY-1)*GX+sideCol+pick3()),NS);
+    if(wide)both(lk(col2,(GY-1)*GX+col2+pick3()),NS);
+    if(tall){addRoad(meander(scRow(2.5)+pick3(),0.7+MR()*0.8,4.5+MR()*3.5,MR()*6.2832),EW);addRoad(meander(scRow(11.5)+pick3(),0.7+MR()*0.8,4.5+MR()*3.5,MR()*6.2832),EW);}
+  }else{
+    // equis: cuatro caminos desde las esquinas que se juntan en el pueblo
+    addRoad(across(lk((scRow(2)+pick3())*GX,townK)),EW);
+    addRoad(across(lk((scRow(12)+pick3())*GX,townK)),EW);
+  }
+  // pueblo en el centro del mapa: su hexágono y los seis de alrededor
+  // pueblo en el centro del mapa: su hexágono y los seis de alrededor
+  TOWNS=[townK];
+  town[townK]=1;
+  nb[townK].forEach(function(n){if(n>=0)town[n]=1;});
+  // Fábricas azules: cuatro lugares fijos con un pequeño corrimiento por mapa, nunca sobre un camino ni pegadas al pueblo.
+  // Las rojas son su espejo.
+  function hd(a,b){return Math.sqrt((hx[a]-hx[b])*(hx[a]-hx[b])+(hy[a]-hy[b])*(hy[a]-hy[b]))/HW;}   // distancia en hexágonos
+  function nearRoadTown(k){
+    if(road[k]||town[k])return true;
+    for(var d=0;d<6;d++){var n=nb[k][d];if(n>=0&&(road[n]||town[n]))return true;}
+    return false;
+  }
+  function nearest(k0,ok){
+    var best=-1,bd=1e18;
+    for(var q=0;q<NC;q++){if(!ok(q))continue;var dd=hd(q,k0);if(dd<bd){bd=dd;best=q;}}
+    return best;
+  }
+  function shear(j){return Math.round(-diag*(Y(j)-WY/2)*DIAG_TILT*WX/WY/HW);}   // cuántas columnas se corre la línea del frente en la fila j
+  FABS=[];
+  [[3,2],[3,12],[7,6],[7,8],[5,7]].forEach(function(b){      // las 4 fábricas y, último, el cuartel
+    var i=Math.max(1,Math.min(MID-3,scCol(b[0])+pick3())),j=Math.max(1,Math.min(GY-2,scRow(b[1])+pick3()));
+    if(diag)i=Math.max(1,Math.min(GX-2,i+shear(j)));              // en diagonal, se corren siguiendo la línea del frente
+    var k=nearest(j*GX+i,function(q){
+      var qi=q%GX,qj=Math.floor(q/GX);
+      if(qi<1||qi>GX-2||qj<1||qj>GY-2||sideD(q)<HW*3.2||nearRoadTown(q)||nearRoadTown(symK(q)))return false;   // (la gemela roja tampoco puede caer sobre un camino)
+      for(var f=0;f<FABS.length;f++)if(hd(q,FABS[f])<2.5)return false;
+      return true;
+    });
+    FABS.push(k);
+  });
+  // Mapa ancho: un pueblo más de cada lado (gemelos), sobre un camino, lejos del pueblo del medio y de los edificios
+  function townFar(q,d){for(var t=0;t<TOWNS.length;t++)if(hd(q,TOWNS[t])<d)return false;return true;}
+  if(wide){
+    var cand=[],cand2=[];                          // cand: los dos gemelos caen sobre camino; cand2: solo el azul (mapas en diagonal)
+    for(var tq=0;tq<NC;tq++){
+      var ti=tq%GX,tj=Math.floor(tq/GX),tm=symK(tq);
+      if(!road[tq]||ti<3||ti>GX-4||tj<3||tj>GY-4||sideD(tq)<HW*7||hd(tq,townK)<12)continue;
+      var okT=true;
+      for(var tf=0;tf<FABS.length;tf++)if(hd(tq,FABS[tf])<5||hd(tm,symK(FABS[tf]))<5)okT=false;
+      if(okT)(road[tm]?cand:cand2).push(tq);
+    }
+    if(!cand.length)cand=cand2;
+    if(cand.length){
+      var tk=cand[Math.floor(MR()*cand.length)];
+      [tk,symK(tk)].forEach(function(t){TOWNS.push(t);town[t]=1;nb[t].forEach(function(n){if(n>=0)town[n]=1;});});
+    }
+  }
+  var allFabs=FABS.concat(FABS.map(symK));
+  // Banderas libres: una del lado azul, una del lado rojo y dos por el medio (una arriba y otra abajo), cada una sorteada dentro de su zona
+  FLAGS=[];
+  (wide&&tall?[[0.07,0.20,0.08,0.44],[0.80,0.93,0.56,0.92],[0.07,0.20,0.56,0.92],[0.80,0.93,0.08,0.44],[0.26,0.42,0.08,0.44],[0.58,0.74,0.56,0.92],
+               [0.26,0.42,0.56,0.92],[0.58,0.74,0.08,0.44],[0.45,0.55,0.06,0.30],[0.45,0.55,0.70,0.94]]
+   :tall?[[0.20,0.40,0.08,0.44],[0.60,0.80,0.56,0.92],[0.20,0.40,0.56,0.92],[0.60,0.80,0.08,0.44],[0.42,0.58,0.06,0.30],[0.42,0.58,0.70,0.94]]
+       :[[0.20,0.40,0.12,0.88],[0.60,0.80,0.12,0.88],[0.42,0.58,0.08,0.32],[0.42,0.58,0.68,0.92]]).forEach(function(z){
+    var k=-1;
+    function flagOk(q,sep){
+      var j=Math.floor(q/GX),ok=!nearRoadTown(q)&&j>0&&j<GY-1&&townFar(q,4);
+      FLAGS.forEach(function(f){if(hd(q,f)<sep)ok=false;});
+      allFabs.forEach(function(f){if(hd(q,f)<3.5)ok=false;});
+      return ok;
+    }
+    for(var tries=0;tries<80&&k<0;tries++){
+      var j=Math.round((z[2]+MR()*(z[3]-z[2]))*(GY-1)),i=Math.max(1,Math.min(GX-2,Math.round((z[0]+MR()*(z[1]-z[0]))*(GX-1))+(diag?shear(j):0))),q=j*GX+i;
+      if(flagOk(q,5))k=q;
+    }
+    if(k<0){                                      // no hubo suerte: el lugar válido más cercano al centro de su zona
+      var zc=Math.round((z[2]+z[3])/2*(GY-1))*GX+Math.round((z[0]+z[1])/2*(GX-1));
+      k=nearest(zc,function(q){return flagOk(q,3.5);});
+    }
+    if(k>=0)FLAGS.push(k);
+  });
+  // Río en diagonal: entra por arriba de un lado y sale por abajo del otro (según el mapa), serpenteando.
+  // Cruza la línea del medio unas filas al norte del pueblo; donde lo cruza un camino hay puente.
+  // Se prueban varias formas del río y se elige una que cruce cada camino por un solo hexágono
+  // (un puente por cruce, nunca dos pegados) y que no pase por el pueblo.
+  var yc=Y(tRow-4);
+  function traceRiver(ph,slope,ycRow,xs){
+    if(ycRow!==undefined)yc=Y(ycRow);
+    function riverX(y){return WX/2+(xs||0)*HW+(y-yc)/WY*WX*slope+HW*1.5*Math.sin((y-yc)/WY*2*Math.PI*2.5+ph);}
+    var rk=Math.max(0,Math.min(GX-1,Math.round(riverX(Y(0))/HW-0.5))),path=[rk];
+    for(var rj=1;rj<GY;rj++){
+      var xt=riverX(Y(rj)),sw=nb[rk][2],se=nb[rk][1];
+      if(sw<0&&se<0)break;
+      var pick=(sw<0)?se:(se<0)?sw:(Math.abs(hx[sw]-xt)<Math.abs(hx[se]-xt)?sw:se);
+      if(road[rk]&&sw>=0&&se>=0&&road[pick]){var alt=pick===sw?se:sw;if(!road[alt])pick=alt;}   // recién cruzó: sale del camino
+      rk=pick;path.push(rk);
+      for(var g=0;g<6&&!road[rk]&&Math.abs(hx[rk]-xt)>HW*0.75;g++){   // si la curva se aleja, avanza de costado (nunca a lo largo de un camino)
+        var nx2=nb[rk][hx[rk]<xt?0:3];if(nx2<0||road[nx2])break;
+        rk=nx2;path.push(rk);
+      }
+    }
+    return path;
+  }
+  function riverFaults(path){       // cuántas cosas feas tiene: puentes pegados o amontonados, río costeando un camino, río dentro del pueblo
+    var bad=0,br=[];
+    path.forEach(function(k){
+      if(town[k])bad+=5;if(road[k])br.push(k);
+      flagK.forEach(function(f){if(k===f)bad+=5;else if(nb[f].indexOf(k)>=0)bad+=2;});     // tampoco sobre una bandera o una fábrica, ni pegado a ellas
+    });
+    // puentes: nunca pegados ni cerca uno de otro (menos de 5 hexágonos); eso pasa cuando el río corre al lado de un camino
+    br.forEach(function(a){br.forEach(function(b){if(a<b){var h=hd(a,b);bad+=h<1.5?4:(h<5&&(roadOf[a]&roadOf[b]))?2:0;}});});   // (cerca solo molesta si son del mismo camino)
+    // y que el río no vaya costeando un camino (hexágonos de río pegados a un camino, más allá de las entradas de cada puente)
+    var side=0;
+    path.forEach(function(k){if(road[k])return;for(var d=0;d<6;d++){var n=nb[k][d];if(n>=0&&road[n]){side++;return;}}});
+    bad+=Math.max(0,side-3*br.length);
+    if(!br.length)bad+=3;
+    return bad;
+  }
+  var flagK=FLAGS.concat(allFabs);
+  var roadOf=new Uint8Array(NC);roadPaths.forEach(function(pth,n){pth.forEach(function(k){roadOf[k]|=1<<n;});});   // a qué caminos pertenece cada hexágono
+  var bestF=1e9;riverPath=null;
+  // prueba varias formas (inclinación, por dónde cruza el centro, ondulación) y se queda con la primera sin defectos
+  // (cada mapa arranca la búsqueda por un lugar distinto, así el río cambia de mapa en mapa)
+  function rot(a){var n=Math.floor(MR()*a.length);return a.slice(n).concat(a.slice(0,n));}
+  var rsg=MR()<0.5?1:-1,p0=Math.floor(MR()*12);
+  var yrs=rot([tRow-4,tRow-6,tRow-8,tRow+6,tRow+4]).concat([tRow-2,tRow+2,tRow+8,tRow-10,tRow]);
+  var sls=rot([0.62,0.55,0.7,0.48,0.4,0.3]).concat([0.2,0.85,0.1,-0.3,-0.55]);
+  [0,3,-3,6,-6,9,-9].forEach(function(xs){        // (si por el centro no hay forma limpia, lo corre hacia un costado)
+    if(bestF<=0)return;
+    yrs.forEach(function(yr){
+      sls.forEach(function(sl){
+        for(var phi=0;phi<12&&bestF>0;phi++){
+          var cand=traceRiver(((phi+p0)%12)*0.52,sl*rsg,yr,xs),fl=riverFaults(cand);
+          if(fl<bestF){bestF=fl;riverPath=cand;}
+        }
+      });
+    });
+  });
+  riverPath.forEach(function(k){if(!town[k])river[k]=1;});
+  // Si aun así el río quedó sobre una bandera o pegado a ella, la bandera se corre al lugar libre más cercano
+  function wet(q){if(river[q])return true;for(var d=0;d<6;d++){var n=nb[q][d];if(n>=0&&river[n])return true;}return false;}
+  FLAGS.forEach(function(f,n){
+    if(!wet(f))return;
+    var q=nearest(f,function(q){
+      if(wet(q)||nearRoadTown(q)||!townFar(q,4))return false;
+      var j=Math.floor(q/GX);if(j<1||j>GY-2)return false;
+      for(var m=0;m<FLAGS.length;m++)if(m!==n&&hd(q,FLAGS[m])<3.5)return false;
+      for(m=0;m<allFabs.length;m++)if(hd(q,allFabs[m])<3.5)return false;
+      return true;
+    });
+    if(q>=0)FLAGS[n]=q;
+  });
+  for(var kw=0;kw<NC;kw++)water[kw]=(river[kw]&&!road[kw])?1:0;
+  // Lagunas chicas (3 a 5 hexágonos) que no se pueden cruzar: ninguna, una o dos de cada lado, en espejo.
+  // Lejos de caminos, río, pueblo, banderas y fábricas.
+  var places=FLAGS.concat(FLAGS.map(symK),allFabs,TOWNS);
+  function lakeOk(q){
+    var i=q%GX,j=Math.floor(q/GX);
+    if(i<1||i>GX-2||j<2||j>GY-3||sideD(q)<HW*1.6||lake[q]||wet(q)||nearRoadTown(q))return false;
+    for(var m=0;m<places.length;m++)if(hd(q,places[m])<3)return false;
+    return true;
+  }
+  var nLakes=(wide?[2,3,3,4]:tall?[1,2,2,3]:[0,1,1,2])[Math.floor(MR()*4)];
+  for(var li=0;li<nLakes;li++){
+    for(var lt=0;lt<80;lt++){
+      var q0=Math.floor(MR()*NC);
+      if(!lakeOk(q0)||!lakeOk2(q0))continue;
+      var blob=[q0],want=3+Math.floor(MR()*3),cq=q0;
+      for(var lg=0;lg<30&&blob.length<want;lg++){
+        var nq=nb[cq][Math.floor(MR()*6)];
+        if(nq>=0&&blob.indexOf(nq)<0&&lakeOk(nq)&&lakeOk2(nq)){blob.push(nq);cq=nq;}else cq=blob[Math.floor(MR()*blob.length)];
+      }
+      if(blob.length<3)continue;
+      blob.forEach(function(k){lake[k]=1;lake[symK(k)]=1;});
+      break;
+    }
+  }
+  function lakeOk2(q){var m=symK(q);return !wet(m)&&!nearRoadTown(m)&&!river[m];}       // el espejo también tiene que quedar en seco
+}
+// El tablero tiene la forma de la ventana y el doble de columnas y de filas que entrarían con 900 hexágonos (MAP_WIDE, MAP_TALL):
+// unos 3.600 hexágonos, 76 x 48 en una pantalla apaisada. Se calcula al empezar cada partida.
+var MAP_TALL=2, MAP_WIDE=2;
+function fitGrid(){
+  var r=cv.getBoundingClientRect(),a=(r.width>50&&r.height>50)?r.width/r.height:1.8;
+  a=Math.max(0.9,Math.min(2.5,a));
+  var q=a*1.5/Math.sqrt(3);                       // columnas por fila para esa proporción
+  var gy=2*Math.round(Math.sqrt(900/q)/2),gx=2*Math.round(q*gy/2);
+  return [gx*MAP_WIDE,gy*MAP_TALL];
+}
+function hexAt(x,y){
+  var j0=Math.round((y-OY-HS)/(1.5*HS)),best=0,bd=1e18;
+  for(var j=Math.max(0,j0-1);j<=Math.min(GY-1,j0+1);j++){
+    var i0=Math.round((x-((j&1)?HW/2:0))/HW-0.5);
+    for(var i=Math.max(0,i0-1);i<=Math.min(GX-1,i0+1);i++){
+      var k=j*GX+i,dx=hx[k]-x,dy=hy[k]-y,dd=dx*dx+dy*dy;
+      if(dd<bd){bd=dd;best=k;}
+    }
+  }
+  return best;
+}
+function hexPath(path,k){
+  path.moveTo(hx[k]+VX[0],hy[k]+VY[0]);
+  for(var v=1;v<6;v++)path.lineTo(hx[k]+VX[v],hy[k]+VY[v]);
+  path.closePath();
+}
+
+// ---------- Estado ----------
+var cv=document.getElementById('cv'), ctx=cv.getContext('2d'), scale=1;
+var EDGE_SPEED=1100;    // píxeles de pantalla por segundo al mover la vista con los bordes o las flechas
+var VIEW_COLS=22, ZMAX=10, needCenter=true, mmDrag=false, mmEl=document.getElementById('mm'), mmCtx=mmEl.getContext('2d');   // zoom inicial: los hexágonos se ven del tamaño de siempre
+var units=[], cities=[], fx=[], time=0, paused=false, speed=1, over=null, uid=1;
+var attackMode=false, stackPin=-1, stackRects=[];
+var terrT=60, bonus=null;       // cuenta regresiva del extra por territorio, y el último que se cobró (para avisarlo unos segundos)
+var gold=[0,0], hover=null;
+var ai, claimT=0, hungerT=0, hudT=0, pct=[50,50];
+var menu=null, menuRects=[], menuBox=null, tableCv=null;
+var drag=null, lastClick={id:0,t:0}, view={z:1,ox:0,oy:0}, pan=null, rdrag=null, mouse={x:0,y:0,inside:false};
+
+function $(id){return document.getElementById(id);}
+function sign(team){return team===BLUE?1:-1;}
+function d2(a,b){var dx=a.x-b.x,dy=a.y-b.y;return dx*dx+dy*dy;}
+
+// ---------- Inicio ----------
+// Bosques: manchas sorteadas en la mitad azul y copiadas a la roja (mapa parejo). Son parte del mapa.
+function genTerrain(){
+  terr.fill(0);
+  var avoid=new Uint8Array(NC),k,d;
+  function mark(c){avoid[c]=1;for(var q=0;q<6;q++){var n=nb[c][q];if(n>=0)avoid[n]=1;}}
+  for(k=0;k<NC;k++){if(road[k]||river[k]||town[k])avoid[k]=1;if(lake[k])mark(k);}
+  FLAGS.forEach(function(c){mark(c);mark(symK(c));});          // ni sobre banderas o fábricas ni pegados (de los dos lados, porque se copia al otro bando)
+  FABS.forEach(function(c){mark(c);mark(symK(c));});
+  var left=[];
+  for(k=0;k<NC;k++)if(sideD(k)>HW*0.4&&!avoid[k])left.push(k);
+  var blobs=Math.max(5,Math.round(left.length/22));
+  for(var b=0;b<blobs&&left.length;b++){
+    var cur=left[Math.floor(MR()*left.length)],size=3+Math.floor(MR()*4);
+    for(var t=0;t<size;t++){
+      if(!avoid[cur]&&sideD(cur)>HW*0.4)terr[cur]=1;
+      var n2=nb[cur][Math.floor(MR()*6)];
+      if(n2>=0&&!avoid[n2])cur=n2;
+    }
+  }
+  for(k=0;k<NC;k++)if(terr[k]===1){
+    var mk=symK(k);
+    if(sideD(k)>0&&!road[mk]&&!river[mk]&&!town[mk]&&!avoid[mk])terr[mk]=1;
+  }
+}
+// Recorrido suave de un camino (curvas redondeadas en vez de quiebres)
+// Puntos a lo largo del recorrido suavizado de una cadena de hexágonos (para dibujar cosas de ancho variable)
+function smoothPts(path,stepT){
+  var pts=[],out=[],i,t;
+  path.forEach(function(k){pts.push([hx[k],hy[k]]);});
+  pts.unshift([2*pts[0][0]-pts[1][0],2*pts[0][1]-pts[1][1]]);
+  var n=pts.length;pts.push([2*pts[n-1][0]-pts[n-2][0],2*pts[n-1][1]-pts[n-2][1]]);
+  for(i=1;i<pts.length-1;i++){
+    var ax=(pts[i-1][0]+pts[i][0])/2,ay=(pts[i-1][1]+pts[i][1])/2,bx=(pts[i][0]+pts[i+1][0])/2,by=(pts[i][1]+pts[i+1][1])/2;
+    for(t=0;t<1;t+=stepT){
+      var u=1-t;
+      out.push([u*u*ax+2*u*t*pts[i][0]+t*t*bx,u*u*ay+2*u*t*pts[i][1]+t*t*by]);
+    }
+  }
+  return out;
+}
+function roadTrace(c,path,ext){
+  var pts=[];
+  var a=path[0],b=path[path.length-1];
+  if(ext)pts.push([hx[a]+ext[0][0],hy[a]+ext[0][1]]);
+  path.forEach(function(k){pts.push([hx[k],hy[k]]);});
+  if(ext)pts.push([hx[b]+ext[1][0],hy[b]+ext[1][1]]);
+  c.beginPath();c.moveTo(pts[0][0],pts[0][1]);
+  for(var i=1;i<pts.length-1;i++)c.quadraticCurveTo(pts[i][0],pts[i][1],(pts[i][0]+pts[i+1][0])/2,(pts[i][1]+pts[i+1][1])/2);
+  c.lineTo(pts[pts.length-1][0],pts[pts.length-1][1]);
+}
+// Pinta el terreno (pasto, bosques, caminos de tierra) en un lienzo aparte; se hace una vez por partida
+function paintTerrain(){
+  if(!terrCv)terrCv=document.createElement('canvas');
+  TERR_RES=Math.min(2,Math.sqrt(8e6/(WX*WY)));
+  terrCv.width=Math.ceil(WX*TERR_RES);terrCv.height=Math.ceil(WY*TERR_RES);
+  var c=terrCv.getContext('2d'),k,i,R=MR;
+  c.setTransform(TERR_RES,0,0,TERR_RES,0,0);
+  var all=new Path2D();for(k=0;k<NC;k++)hexPath(all,k);
+  c.save();c.clip(all);
+  // pasto: base + manchas suaves de distintos verdes + puntitos
+  veilOwn=null;                                  // terreno nuevo: el lienzo del tablero se compone entero otra vez
+  c.fillStyle='#6a9440';c.fillRect(0,0,WX,WY);
+  var greens=['94,138,56','122,164,74','84,126,48','138,170,88','104,150,62','150,166,96'];
+  for(i=0;i<Math.round(WX*WY/2600);i++){
+    var x=R()*WX,y=R()*WY,r=18+R()*60,g=c.createRadialGradient(x,y,0,x,y,r),col=greens[Math.floor(R()*greens.length)];
+    g.addColorStop(0,'rgba('+col+',.42)');g.addColorStop(1,'rgba('+col+',0)');
+    c.fillStyle=g;c.fillRect(x-r,y-r,2*r,2*r);
+  }
+  for(i=0;i<Math.round(WX*WY/90);i++){
+    c.fillStyle=R()<0.5?'rgba(40,70,25,.22)':'rgba(190,215,130,.18)';
+    c.fillRect(R()*WX,R()*WY,1+R()*1.4,1+R()*1.4);
+  }
+  // lagunas: mancha de agua con orilla de arena, más oscura al medio
+  function lakeBlob(col,r){
+    c.fillStyle=col;c.beginPath();
+    for(var q=0;q<NC;q++){
+      if(!lake[q])continue;
+      c.moveTo(hx[q]+r,hy[q]);c.arc(hx[q],hy[q],r,0,6.2832);
+      for(var d=0;d<3;d++){var n=nb[q][d];if(n>=0&&lake[n]){var mx=(hx[q]+hx[n])/2,my=(hy[q]+hy[n])/2;c.moveTo(mx+r,my);c.arc(mx,my,r,0,6.2832);}}
+    }
+    c.fill();
+  }
+  c.shadowColor='rgba(24,44,26,.8)';c.shadowBlur=5*TERR_RES;
+  lakeBlob('rgba(74,92,58,.9)',HW*0.66);c.shadowBlur=0;
+  lakeBlob('#a39c6c',HW*0.62);lakeBlob('#4f8fcf',HW*0.56);lakeBlob('#2f6fb8',HW*0.46);lakeBlob('#255f9f',HW*0.28);
+  c.strokeStyle='rgba(255,255,255,.35)';c.lineWidth=1.1;
+  for(k=0;k<NC;k++)if(lake[k]&&R()<0.8){var lx=hx[k]+(R()-0.5)*HW*0.5,ly=hy[k]+(R()-0.5)*HW*0.5,ll=HW*(0.08+R()*0.08);c.beginPath();c.moveTo(lx-ll,ly);c.quadraticCurveTo(lx,ly-ll*0.35,lx+ll,ly);c.stroke();}
+  // río: cauce de ancho irregular, con orilla embarrada, agua poco profunda en los bordes y más oscura al medio
+  var rpts=smoothPts(riverPath,0.1),ph1=R()*6.28,ph2=R()*6.28,ph3=R()*6.28;
+  function rwid(n){return HW*(0.30+0.07*Math.sin(n*0.11+ph1)+0.05*Math.sin(n*0.29+ph2)+0.03*Math.sin(n*0.67+ph3));}
+  function blob(col,grow,mul){
+    c.fillStyle=col;c.beginPath();
+    rpts.forEach(function(p,n){var rr=rwid(n)*mul+grow;c.moveTo(p[0]+rr,p[1]);c.arc(p[0],p[1],rr,0,6.2832);});
+    c.fill();
+  }
+  c.shadowColor='rgba(24,44,26,.8)';c.shadowBlur=5*TERR_RES;
+  blob('rgba(74,92,58,.9)',HW*0.07,1);          // orilla
+  c.shadowBlur=0;
+  blob('#8a8f66',HW*0.035,1);                    // barro / arena
+  blob('#4f9fb8',0,1);                           // agua baja
+  blob('#3484b4',0,0.72);                        // agua
+  blob('#2a6f9f',0,0.42);                        // cauce profundo
+  c.strokeStyle='rgba(200,232,244,.5)';c.lineWidth=1.1;c.lineCap='round';      // pequeñas ondas
+  for(i=0;i<rpts.length;i+=3){
+    if(R()<0.45)continue;
+    var wp=rpts[i],wr=rwid(i)*0.55,wx=wp[0]+(R()-0.5)*2*wr,wy=wp[1]+(R()-0.5)*2*wr,wl=HW*(0.07+R()*0.07);
+    c.beginPath();c.moveTo(wx-wl,wy);c.quadraticCurveTo(wx,wy-wl*0.35,wx+wl,wy);c.stroke();
+  }
+  // caminos de tierra, con bordes irregulares que se funden con el pasto
+  roadPaths.forEach(function(path,pi){
+    var ext=roadExt[pi];
+    c.lineJoin='round';c.lineCap='round';
+    c.shadowColor='rgba(70,52,28,.9)';c.shadowBlur=7*TERR_RES;
+    roadTrace(c,path,ext);c.strokeStyle='rgba(120,96,58,.75)';c.lineWidth=HW*0.40;c.stroke();
+    c.shadowBlur=0;
+    var pts=[];path.forEach(function(k){pts.push([hx[k],hy[k]]);});
+    for(i=0;i<pts.length-1;i++)for(var t=0;t<1;t+=0.12){
+      var px=pts[i][0]+(pts[i+1][0]-pts[i][0])*t,py=pts[i][1]+(pts[i+1][1]-pts[i][1])*t;
+      c.fillStyle='rgba(168,140,92,.5)';c.beginPath();c.arc(px+(R()-0.5)*HW*0.22,py+(R()-0.5)*HW*0.22,HW*(0.13+R()*0.09),0,6.2832);c.fill();
+    }
+    roadTrace(c,path,ext);c.strokeStyle='#b39766';c.lineWidth=HW*0.33;c.stroke();
+    roadTrace(c,path,ext);c.strokeStyle='rgba(206,182,134,.85)';c.lineWidth=HW*0.19;c.stroke();
+    roadTrace(c,path,ext);c.strokeStyle='rgba(120,96,58,.35)';c.lineWidth=HW*0.035;c.setLineDash([HW*0.3,HW*0.22]);c.stroke();c.setLineDash([]);
+    for(i=0;i<pts.length-1;i++)for(t=0;t<1;t+=0.05){
+      px=pts[i][0]+(pts[i+1][0]-pts[i][0])*t;py=pts[i][1]+(pts[i+1][1]-pts[i][1])*t;
+      c.fillStyle=R()<0.5?'rgba(95,74,42,.35)':'rgba(228,208,165,.4)';
+      c.fillRect(px+(R()-0.5)*HW*0.3,py+(R()-0.5)*HW*0.3,1+R()*1.5,1+R()*1.5);
+    }
+  });
+  // puentes: donde un camino cruza el río, tablones con barandas, orientados según el camino
+  for(k=0;k<NC;k++)if(river[k]&&road[k]){
+    var ang=0;
+    for(var pi2=0;pi2<roadPaths.length;pi2++){
+      var ix=roadPaths[pi2].indexOf(k);if(ix<0)continue;
+      var pa=roadPaths[pi2][Math.max(0,ix-1)],pb2=roadPaths[pi2][Math.min(roadPaths[pi2].length-1,ix+1)];
+      ang=Math.atan2(hy[pb2]-hy[pa],hx[pb2]-hx[pa]);break;
+    }
+    c.save();c.translate(hx[k],hy[k]);c.rotate(ang);
+    c.fillStyle='rgba(20,14,8,.45)';c.fillRect(-HW*0.47,-HW*0.25,HW*0.94,HW*0.50);
+    c.fillStyle='#9a7748';c.fillRect(-HW*0.45,-HW*0.21,HW*0.90,HW*0.42);
+    c.strokeStyle='rgba(60,40,18,.7)';c.lineWidth=1;
+    for(var pl=-4;pl<=4;pl++){c.beginPath();c.moveTo(pl*HW*0.1,-HW*0.21);c.lineTo(pl*HW*0.1,HW*0.21);c.stroke();}
+    c.strokeStyle='#4a3418';c.lineWidth=HW*0.05;
+    c.beginPath();c.moveTo(-HW*0.45,-HW*0.23);c.lineTo(HW*0.45,-HW*0.23);c.moveTo(-HW*0.45,HW*0.23);c.lineTo(HW*0.45,HW*0.23);c.stroke();
+    c.restore();
+  }
+  // pueblo: casitas alrededor del cruce, sin pisar la calle
+  var houses=[];
+  for(k=0;k<NC;k++)if(town[k]){
+    for(i=0;i<(TOWNS.indexOf(k)>=0?3:5);i++){
+      var ha=R()*6.2832,hr=(0.18+R()*0.3)*HW,hxp=hx[k]+Math.cos(ha)*hr,hyp=hy[k]+Math.sin(ha)*hr,okh=true;
+      for(var q=0;q<NC;q++)if(road[q]&&(hx[q]-hxp)*(hx[q]-hxp)+(hy[q]-hyp)*(hy[q]-hyp)<HW*HW*0.13){okh=false;break;}
+      houses.forEach(function(h2){if((h2[0]-hxp)*(h2[0]-hxp)+(h2[1]-hyp)*(h2[1]-hyp)<HW*HW*0.05)okh=false;});
+      if(okh)houses.push([hxp,hyp,HW*(0.12+R()*0.05),R()]);
+    }
+  }
+  houses.sort(function(p1,p2){return p1[1]-p2[1];});
+  houses.forEach(function(h){
+    var w=h[2]*1.5,ht=h[2],roofs=['#b5493a','#a8553f','#8f4a3a','#6d5a4a','#c06a45'];
+    c.fillStyle='rgba(10,20,10,.35)';c.fillRect(h[0]-w/2+2,h[1]-ht/2+3,w,ht);
+    c.fillStyle=h[3]<0.5?'#e9e2cf':'#d9cdb0';c.fillRect(h[0]-w/2,h[1]-ht/2,w,ht);
+    c.fillStyle=roofs[Math.floor(h[3]*roofs.length)];
+    c.beginPath();c.moveTo(h[0]-w/2-1.5,h[1]-ht/2);c.lineTo(h[0],h[1]-ht*1.15);c.lineTo(h[0]+w/2+1.5,h[1]-ht/2);c.closePath();c.fill();
+    c.strokeStyle='rgba(30,20,12,.6)';c.lineWidth=0.8;c.stroke();c.strokeRect(h[0]-w/2,h[1]-ht/2,w,ht);
+    c.fillStyle='rgba(50,40,30,.7)';c.fillRect(h[0]-1.2,h[1]-ht*0.05,2.4,ht*0.55);
+  });
+  // bosques: suelo más oscuro y copas de árboles
+  var trees=[];
+  for(k=0;k<NC;k++)if(terr[k]===1){
+    var gg=c.createRadialGradient(hx[k],hy[k],HW*0.1,hx[k],hy[k],HW*0.78);
+    gg.addColorStop(0,'rgba(38,78,34,.85)');gg.addColorStop(0.7,'rgba(42,84,36,.6)');gg.addColorStop(1,'rgba(42,84,36,0)');
+    c.fillStyle=gg;c.fillRect(hx[k]-HW,hy[k]-HW,2*HW,2*HW);
+    for(i=0;i<9;i++){
+      var a=R()*6.2832,rr=Math.sqrt(R())*HW*0.47;
+      trees.push([hx[k]+Math.cos(a)*rr,hy[k]+Math.sin(a)*rr,HW*(0.13+R()*0.09)]);
+    }
+  }
+  trees.sort(function(p,q){return p[1]-q[1];});
+  trees.forEach(function(tr){
+    c.fillStyle='rgba(10,24,12,.38)';c.beginPath();c.ellipse(tr[0]+tr[2]*0.35,tr[1]+tr[2]*0.5,tr[2],tr[2]*0.8,0,0,6.2832);c.fill();
+  });
+  trees.forEach(function(tr){
+    var g2=c.createRadialGradient(tr[0]-tr[2]*0.35,tr[1]-tr[2]*0.4,tr[2]*0.1,tr[0],tr[1],tr[2]);
+    g2.addColorStop(0,'#5d9a48');g2.addColorStop(0.55,'#35702f');g2.addColorStop(1,'#1d4a22');
+    c.fillStyle=g2;c.beginPath();c.arc(tr[0],tr[1],tr[2],0,6.2832);c.fill();
+    c.strokeStyle='rgba(12,34,16,.55)';c.lineWidth=0.8;c.stroke();
+  });
+  c.restore();
+  c.strokeStyle='rgba(8,20,8,.2)';c.lineWidth=1;c.stroke(all);       // cuadrícula de hexágonos, pintada una sola vez
+}
+function init(sameMap){
+  if(!sameMap||!mapN){var prev=mapN;do{mapN=1+Math.floor(Math.random()*MAPS);}while(mapN===prev);}   // mapa nuevo al azar (nunca el mismo dos veces seguidas)
+  var g=fitGrid();
+  seedMap(mapN);buildGrid(g[0],g[1]);
+  genTerrain();paintTerrain();mmVer=-1;
+  needCenter=true;
+  units=[];fx=[];time=0;over=null;uid=1;cities=[];gold=[0,0];occ.fill(null);
+  for(var k=0;k<NC;k++)own[k]=sideD(k)>0?1:-1;
+  ownVer++;
+  FLAGS.forEach(function(k){cities.push({k:k,x:hx[k],y:hy[k],owner:NEUTRAL,type:null,g:CITY_GOLD,cap:0,capBy:-1});});
+  TOWNS.forEach(function(k){cities.push({k:k,x:hx[k],y:hy[k],owner:NEUTRAL,type:null,town:true,g:TOWN_GOLD,cap:0,capBy:-1});});
+  // Las fábricas ya vienen puestas: las azules y sus gemelas rojas
+  FABS.forEach(function(k,n){addFab(k,BLUE,n===4?'hq':'fab');});
+  FABS.forEach(function(k,n){addFab(symK(k),RED,n===4?'hq':'fab');});
+  // Tropas de salida, sorteadas en cada partida: una de cada tipo como mínimo, más una o dos al azar (un solo médico).
+  // Los dos bandos reciben las mismas tropas, pero cada uno las tiene repartidas al azar entre sus fábricas.
+  var army=['inf','at','tank','amb'],extra=1+Math.floor(Math.random()*2);
+  while(extra-->0){
+    army.push(['inf','at','tank'][Math.floor(Math.random()*3)]);      // las extra nunca son médicos: en la salida hay uno solo
+  }
+  [BLUE,RED].forEach(function(t){
+    var fs=cities.filter(function(c){return c.type&&c.owner===t;}),cnt=fs.map(function(){return 0;});
+    army.forEach(function(type){
+      var n;do{n=Math.floor(Math.random()*fs.length);}while(cnt[n]>=STACK);
+      cnt[n]++;spawn(fs[n],type);
+    });
+  });
+  ai={next:2,cool:0,waves:0,mix:DOCTRINES[Math.floor(Math.random()*DOCTRINES.length)],want:null,wantT:0};
+  claimT=0;hungerT=0;hudT=0;terrT=60;bonus=null;drag=null;rdrag=null;menu=null;menuRects=[];menuBox=null;stackPin=-1;
+  if(attackMode)setAttack(false);
+  countTerritory();
+  $('end').style.display='none';
+  $('btnMap').textContent='Mapa '+mapN+' de '+MAPS+' ▸ siguiente';
+  for(var gi=0;gi<mapBtns.length;gi++)mapBtns[gi].classList.toggle('cur',gi+1===mapN);
+  updateHud();
+}
+
+var AMB_MAX=2;   // la IA no hace más de 2; el jugador, las que quiera
+function ambCount(team){var n=0;units.forEach(function(u){if(u.team===team&&u.type==='amb'&&u.hp>0)n++;});return n;}
+// Resistencia extra: ficha parada dentro de una fábrica de su bando
+// Daño de un disparo de u contra e: tipo contra tipo, cobertura del blanco (fábrica o cuartel propio, bosque, pueblo) y comandante.
+// La artillería ignora las coberturas.
+function damage(u,e){
+  var d=TYPES[u.type].dmg*MULT[u.type][e.type];
+  if(u.type!=='art')d*=(fortified(e)?FORT:1)*(terr[e.c]===1?FOREST_COVER[e.type]:1)*(town[e.c]?TOWN_COVER:1);
+  for(var i=0;i<units.length;i++){
+    var c=units[i];
+    if(c.type==='cmd'&&c.team===u.team&&c!==u&&c.hp>0&&d2(c,u)<=CMD_R*CMD_R){d*=CMD_BONUS;break;}
+  }
+  return d;
+}
+function fortified(u){
+  if(u.fc>=0||Math.abs(u.x-hx[u.c])>12*U||u.y!==hy[u.c])return false;
+  for(var i=0;i<cities.length;i++)if(cities[i].k===u.c)return cities[i].owner===u.team&&!!cities[i].type;   // solo fábricas, no banderas
+  return false;
+}
+// Encargo del jugador en la fábrica elegida (menu): devuelve '' si se puede, o el motivo si no
+function canBuy(type){
+  if(!menu||menu.owner!==BLUE||PROD[menu.type].indexOf(type)<0)return 'x';
+  if(menu.queue.length>=QMAX)return 'cola';
+  var n=pending(BLUE),cs=0;
+  units.forEach(function(u){if(u.team===BLUE)n++;});
+  cities.forEach(function(c){if(c.owner===BLUE)cs++;});
+  if(n>=cs*SUPPLY)return 'tope';
+  if(gold[BLUE]<COST[type])return 'oro';
+  return '';
+}
+// Se paga al encargar; la ficha entra en la cola de esa fábrica y sale cuando le toca y termina de fabricarse
+function buy(type){
+  if(over||canBuy(type))return;
+  gold[BLUE]-=COST[type];menu.queue.push(type);updateHud();
+}
+// Cancelar un encargo de la cola: devuelve el oro
+function cancelBuild(c,i){
+  if(i<0||i>=c.queue.length)return;
+  gold[c.owner]+=COST[c.queue[i]];
+  c.queue.splice(i,1);
+  if(i===0)c.bt=0;
+  updateHud();
+}
+// Fabricación: lleva un tiempo por tipo de ficha; en una fábrica tomada al enemigo, el doble
+function buildTime(c,type){return BUILD[type]*(c.home!==c.owner?CAPTURED_SLOW:1);}
+function pending(team){        // fichas encargadas por un bando, en todas sus colas (cuentan para el tope)
+  var n=0;
+  cities.forEach(function(c){if(c.queue&&c.owner===team)n+=c.queue.length;});
+  return n;
+}
+function queued(team,type){    // cuántas de ese tipo hay encargadas
+  var n=0;
+  cities.forEach(function(c){if(c.queue&&c.owner===team)c.queue.forEach(function(t){if(t===type)n++;});});
+  return n;
+}
+function tickBuild(c,dt){
+  if(!c.queue||!c.queue.length)return;
+  c.bt+=dt;
+  if(c.bt>=buildTime(c,c.queue[0])&&spawn(c,c.queue[0])){   // si no hay lugar para que salga, espera
+    c.queue.shift();c.bt=0;
+    if(c.rally>=0&&c.owner===BLUE)order([units[units.length-1]],hx[c.rally],hy[c.rally]);   // con punto de reunión: la ficha nueva sale directo para allá
+  }
+}
+// Oro que rinde un lugar cada 10 s: completo aunque no haya ninguna ficha encima. Una fábrica tomada al enemigo rinde la mitad.
+function cityYield(c){return (c.type&&c.home!==c.owner)?c.g/2:c.g;}
+function cityAtHex(k){for(var i=0;i<cities.length;i++)if(cities[i].k===k)return cities[i];return null;}
+// Fábrica: todas son iguales; cada una tiene su cola de producción (queue) y el avance de lo que está haciendo (bt)
+function addFab(k,team,type){cities.push({k:k,x:hx[k],y:hy[k],owner:team,home:team,type:type,g:CITY_GOLD,cap:0,capBy:-1,queue:[],bt:0,rally:-1});}   // rally: hexágono del punto de reunión (-1 = las fichas quedan en la fábrica)
+// Fábrica propia bajo el cursor
+function ownFabAt(p){
+  var best=null,bd=24*U*24*U;
+  cities.forEach(function(c){if(c.owner===BLUE&&c.type){var dd=d2(c,p);if(dd<bd){bd=dd;best=c;}}});
+  return best;
+}
+// Edificio rojo que fabrica ese tipo, con la cola más corta (la IA reparte sus encargos); null si todos tienen 2 o más en cola
+function aiFab(type){
+  var best=null;
+  cities.forEach(function(c){if(c.owner===RED&&c.type&&PROD[c.type].indexOf(type)>=0&&c.queue.length<2&&(!best||c.queue.length<best.queue.length))best=c;});
+  return best;
+}
+function aiCan(type){return cities.some(function(c){return c.owner===RED&&c.type&&PROD[c.type].indexOf(type)>=0;});}   // ¿le queda un edificio que lo fabrique?
+// Qué quiere fabricar la IA ahora: sorteo con pesos. Parte de su doctrina de la partida, le suma lo que le gana a tu ejército
+// (antitanques contra tus tanques, tanques contra tu infantería, infantería contra tus antitanques, artillería contra lo que
+// tengas atrincherado en edificios y banderas) y le resta lo que ya tiene de más.
+function aiPick(){
+  var b={inf:0,at:0,tank:0,art:0,cmd:0},r={inf:0,at:0,tank:0,art:0,cmd:0},bn=0,rn=0,dug=0,i,t;
+  for(i=0;i<units.length;i++){
+    var u=units[i];if(u.type==='amb')continue;
+    if(u.team===BLUE){b[u.type]++;bn++;if(cityAtHex(u.c))dug++;}else{r[u.type]++;rn++;}
+  }
+  ['inf','at','tank','art','cmd'].forEach(function(k){var q=queued(RED,k);r[k]+=q;rn+=q;});
+  if(rn<7){var cheap=Math.random()<0.7?'inf':'at';return aiCan(cheap)?cheap:aiCan('inf')?'inf':'at';}          // al principio, tropa barata para salir rápido a tomar banderas
+  var meds=ambCount(RED)+queued(RED,'amb');
+  if(r.cmd<(rn>=16?2:1)&&rn>=8&&aiCan('cmd')&&Math.random()<0.3)return 'cmd';           // un comandante (dos con un ejército grande)
+  if(aiCan('amb')&&meds<AMB_MAX&&rn>=6&&Math.random()<(LEVELS[level].heal&&!meds?0.5:0.15))return 'amb';     // de vez en cuando, un médico
+  var w={inf:ai.mix.inf,at:ai.mix.at,tank:ai.mix.tank,art:1},sum=0;
+  if(bn){w.at+=6*b.tank/bn;w.tank+=6*b.inf/bn;w.inf+=6*b.at/bn;w.art+=5*dug/bn;}
+  var tot=w.inf+w.at+w.tank+w.art;
+  for(t in w){
+    if(rn>=4&&r[t]/rn>w[t]/tot+0.15)w[t]*=0.3;         // ya tiene bastante de eso: baja la chance
+    if(!aiCan(t))w[t]=0;                               // perdió el edificio que lo hace
+    sum+=w[t];
+  }
+  var x=Math.random()*sum;
+  for(t in w){x-=w[t];if(w[t]>0&&x<=0)return t;}
+  return aiCan('inf')?'inf':'at';
+}
+function spawn(c,type){
+  // La tropa nueva queda dentro de su fábrica mientras haya lugar en la pila; si no, sale al hexágono con lugar más cercano
+  var k=cellsFor(c.k,1,null,false)[0];
+  if(k===undefined)return false;
+  var T=TYPES[type];
+  var u={id:uid++,team:c.owner,type:type,c:k,fc:-1,dc:-1,x:hx[k],y:hy[k],hp:T.hp,wait:0,sideN:0,prev:-1,gs:null,cd:0,tgt:null,
+    sel:false,hungry:false,flash:0,dis:false,fight:false,calm:99,job:null};
+  units.push(u);if(!occ[k])occ[k]=u;cellN[k]++;cellTeam[k]=u.team;
+  return true;
+}
+function rebuildOcc(){
+  occ.fill(null);cellN.fill(0);cellTeam.fill(-1);hold.fill(-1);
+  for(var i=0;i<units.length;i++){
+    var u=units[i];if(u.hp<=0)continue;
+    if(!occ[u.c])occ[u.c]=u;
+    cellN[u.c]++;cellTeam[u.c]=u.team;
+  }
+  for(i=0;i<units.length;i++){
+    u=units[i];if(u.hp<=0||u.fc<0)continue;
+    if(!occ[u.fc])occ[u.fc]=u;
+    hold[u.fc]=u.team;
+  }
+}
+// ¿Puede la ficha u entrar al hexágono n? Vacío, o con fichas propias y lugar en la pila (máximo STACK)
+function canEnter(u,n){
+  if(lake[n])return false;
+  var t=cellTeam[n];
+  if(t<0)return hold[n]<0||hold[n]===u.team;
+  return t===u.team&&cellN[n]<STACK;
+}
+// Los n lugares más cercanos al hexágono k0 para fichas del grupo. Un hexágono admite hasta STACK fichas propias,
+// así que puede aparecer repetido (se cuentan las que ya están y las que ya van para ahí). Nunca uno con enemigos.
+function cellsFor(k0,n,group,skipCenter){
+  var used=new Uint8Array(NC),enemy=new Uint8Array(NC),i,team=-1;
+  if(group)group.forEach(function(g){team=g.team;});
+  if(team<0){var cc0=cityAtHex(k0);team=cc0?cc0.owner:BLUE;}
+  for(i=0;i<units.length;i++){
+    var u=units[i];if(u.hp<=0)continue;
+    if(u.team!==team){enemy[u.c]=1;if(u.fc>=0)enemy[u.fc]=1;continue;}
+    if(group&&group.has(u))continue;
+    used[u.c]++;                                  // la que está (aunque esté por irse, todavía ocupa lugar)
+    if(u.dc>=0&&u.dc!==u.c)used[u.dc]++;          // y el lugar adonde va
+  }
+  var list=[];
+  for(i=0;i<NC;i++){
+    if(enemy[i]||lake[i]||(skipCenter&&i===k0))continue;
+    var cap=STACK-used[i];if(cap<=0)continue;
+    var dx=hx[i]-hx[k0],dy=hy[i]-hy[k0];list.push([i,dx*dx+dy*dy,cap]);
+  }
+  list.sort(function(a,b){return a[1]-b[1];});
+  var out=[];
+  for(i=0;i<list.length&&out.length<n;i++)for(var c=0;c<list[i][2]&&out.length<n;c++)out.push(list[i][0]);
+  return out;
+}
+function setDest(u,k){
+  u.dc=k;u.gs=null;u.wait=0;u.sideN=0;u.prev=-1;u.ordT=time;
+  // Cambio de rumbo en plena marcha: si el hexágono que estaba dejando queda mejor para el nuevo destino, pega la vuelta ya
+  if(u.fc>=0){
+    var da=(hx[u.c]-hx[k])*(hx[u.c]-hx[k])+(hy[u.c]-hy[k])*(hy[u.c]-hy[k]);
+    var db=(hx[u.fc]-hx[k])*(hx[u.fc]-hx[k])+(hy[u.fc]-hy[k])*(hy[u.fc]-hy[k]);
+    if(db<da){
+      // ...siempre que en ese hexágono siga habiendo lugar (pudo haber entrado otra ficha mientras tanto)
+      var n=0,foe=false;
+      for(var i=0;i<units.length;i++){var o=units[i];if(o===u||o.hp<=0||o.c!==u.fc)continue;if(o.team!==u.team)foe=true;else n++;}
+      if(!foe&&n<STACK){var tmp=u.c;u.c=u.fc;u.fc=tmp;}
+    }
+  }
+  // Orden dada en pleno combate: la ficha obedece y se mueve (sin disparar) hasta llegar; ahí vuelve a pelear
+  u.dis=!!(u.tgt&&u.tgt.hp>0&&u.c!==k);
+}
+// Orden de movimiento (jugador e IA por igual): cada ficha recibe su propio hexágono
+function order(list,px,py,block){
+  if(!list.length)return;
+  var gs=99;list.forEach(function(u){gs=Math.min(gs,TYPES[u.type].speed);});
+  var sl=cellsFor(hexAt(px,py),list.length,new Set(list),false),free=list.slice();
+  for(var s=0;s<sl.length;s++){
+    var bi=0,bd=1e18,k=sl[s];
+    for(var i=0;i<free.length;i++){
+      var dx=free[i].x-hx[k],dy=free[i].y-hy[k],dd=dx*dx+dy*dy;
+      if(dd<bd){bd=dd;bi=i;}
+    }
+    var w=free.splice(bi,1)[0];setDest(w,k);if(block)w.gs=gs;
+  }
+  // Las que salen del mismo hexágono hacia el mismo destino viajan juntas, al paso de la más lenta
+  if(!block){
+    var grp={};
+    list.forEach(function(u){if(u.dc<0)return;var key=u.c+'>'+u.dc;(grp[key]=grp[key]||[]).push(u);});
+    Object.keys(grp).forEach(function(key){
+      var g=grp[key];if(g.length<2)return;
+      var m=99;g.forEach(function(u){m=Math.min(m,TYPES[u.type].speed);});
+      g.forEach(function(u){u.gs=m;});
+    });
+  }
+}
+
+// ---------- Simulación ----------
+// Movimiento hexágono a hexágono: solo entra a un vecino libre; nunca salta ni pisa a otra ficha
+// Tiempo relativo de pasar del hexágono a al b para ese tipo de ficha (1 = pasto)
+function stepCost(a,b,veh){
+  if(lake[a]||lake[b])return 1e6;             // laguna: no se pasa
+  if(road[a]&&road[b])return 1/ROAD_SPEED;
+  if(water[b]||water[a])return 1/RIVER_SLOW;
+  if(veh&&(terr[b]===1||terr[a]===1))return 1/FOREST_SLOW;
+  return 1;
+}
+// Mapa de costos hasta el destino (Dijkstra). El terreno no cambia durante la partida, así que se guarda.
+function getField(dest,veh){
+  var key=dest*2+(veh?1:0),f=fieldCache[key];
+  if(f)return f;
+  f=new Float32Array(NC);f.fill(1e9);f[dest]=0;
+  var hn=[dest],hd=[0];                       // montículo binario: nodos y sus distancias
+  while(hn.length){
+    var c=hn[0],dc=hd[0],ln=hn.pop(),ld=hd.pop(),len=hn.length;
+    if(len){                                  // reubica el último elemento desde la raíz
+      var i=0;
+      for(;;){
+        var l=2*i+1,r=l+1,m=i,md=ld;
+        if(l<len&&hd[l]<md){m=l;md=hd[l];}
+        if(r<len&&hd[r]<md){m=r;}
+        if(m===i)break;
+        hn[i]=hn[m];hd[i]=hd[m];i=m;
+      }
+      hn[i]=ln;hd[i]=ld;
+    }
+    if(dc>f[c])continue;
+    for(var d=0;d<6;d++){
+      var n=nb[c][d];if(n<0)continue;
+      var v=Math.fround(dc+stepCost(n,c,veh));     // misma precisión que el arreglo, para que la comparación de arriba sea exacta
+      if(v<f[n]){
+        f[n]=v;
+        var j=hn.length;hn.push(n);hd.push(v);
+        while(j>0){var p=(j-1)>>1;if(hd[p]<=v)break;hn[j]=hn[p];hd[j]=hd[p];j=p;}
+        hn[j]=n;hd[j]=v;
+      }
+    }
+  }
+  if(++fieldN>500){fieldCache={};fieldN=1;}     // tope de memoria: con el mapa grande cada ruta guardada pesa más
+  fieldCache[key]=f;
+  return f;
+}
+function advance(u,dt){
+  var gx=hx[u.c],gy=hy[u.c],dx=gx-u.x,dy=gy-u.y,dist=Math.sqrt(dx*dx+dy*dy);
+  if(dist>0.01){
+    var here=hexAt(u.x,u.y);
+    var tf=(road[here]&&road[u.c])?ROAD_SPEED:water[here]?RIVER_SLOW:(terr[here]===1&&!FOOT[u.type])?FOREST_SLOW:1;
+    var onRoad=road[here]&&road[u.c];
+    var sp=Math.min(TYPES[u.type].speed,u.gs||99)*((onRoad||own[here]===sign(u.team))?1:0.7)*tf,step=sp*dt;   // fuera del camino, en territorio enemigo se avanza más lento
+    if(dist<=step){u.x=gx;u.y=gy;u.fc=-1;}              // llegó al hexágono: frena en seco
+    else{
+      u.x+=dx/dist*step;u.y+=dy/dist*step;
+      if(u.fc>=0&&dist-step<HW*0.1)u.fc=-1;            // ya dejó libre el hexágono anterior
+    }
+    return;
+  }
+  if(dist>0||u.fc>=0){u.x=gx;u.y=gy;u.fc=-1;}             // quedó a un pelo del centro: se acomoda exacto
+  if(u.dc<0)return;
+  if(u.c===u.dc){u.dc=-1;return;}
+  // elige el vecino que más acerca al destino por la ruta más rápida (caminos, puente; evita río y, los vehículos, el bosque)
+  var fld=getField(u.dc,!FOOT[u.type]),best=-1,cur=fld[u.c],bd=cur-1e-4,movingBlock=false;
+  var side=-1,sd=1e18,lim=cur+1.6;
+  for(var d=0;d<6;d++){
+    var n=nb[u.c][d];if(n<0)continue;
+    var dd=fld[n];
+    var o=occ[n];
+    var free=canEnter(u,n);
+    if(dd>=cur-1e-4){if(free&&n!==u.prev&&dd<lim&&dd<sd){sd=dd;side=n;}continue;}
+    if(!free){if(o&&(o.fc>=0||o.dc>=0))movingBlock=true;continue;}
+    if(dd<bd){bd=dd;best=n;}
+  }
+  // bloqueada por fichas quietas: rodea por el costado (pocas veces seguidas)
+  var lateral=best<0&&(!movingBlock||u.wait>1)&&side>=0&&u.sideN<4;
+  if(lateral)best=side;
+  if(best>=0){
+    cellN[u.c]--;if(cellN[u.c]===0){cellTeam[u.c]=-1;hold[u.c]=u.team;}
+    u.prev=u.c;u.fc=u.c;u.c=best;if(!occ[best])occ[best]=u;cellN[best]++;cellTeam[best]=u.team;u.wait=0;u.sideN=lateral?u.sideN+1:0;
+  }
+  else{
+    // no hay lugar: espera si la de adelante se está moviendo; si no, se queda en el hexágono más cercano
+    u.wait+=dt;
+    if(u.wait>(movingBlock?14:1.5))u.dc=-1;
+  }
+}
+
+function kill(u){
+  u.hp=0;
+  fx.push({k:'ring',x:u.x,y:u.y,t:0.6,d:0.6,r:TYPES[u.type].R,team:u.team});
+}
+
+function update(dt){
+  time+=dt;
+  var i,k,u,c,t;
+  rebuildOcc();
+  // Oro: suman las fábricas, banderas y pueblo de cada bando
+  var cnt=[0,0], cc=[0,0];
+  for(i=0;i<units.length;i++)cnt[units[i].team]++;
+  for(i=0;i<cities.length;i++){
+    c=cities[i];if(c.owner===NEUTRAL)continue;
+    cc[c.owner]++;
+    gold[c.owner]+=cityYield(c)/10*dt;
+  }
+  // La IA encarga igual que el jugador, en la cola de su fábrica menos cargada. Elige qué pedir al azar, con pesos (aiPick),
+  // y junta oro hasta que le alcance; si a los 20 s todavía no le alcanza, vuelve a sortear.
+  if(cc[RED]){
+    if(!ai.want||time-ai.wantT>20){ai.want=aiPick();ai.wantT=time;}
+    var rf=aiFab(ai.want);
+    if(rf&&cnt[RED]+pending(RED)<cc[RED]*SUPPLY&&gold[RED]>=COST[ai.want]){
+      gold[RED]-=COST[ai.want];rf.queue.push(ai.want);ai.want=null;
+    }
+  }
+  for(i=0;i<cities.length;i++)tickBuild(cities[i],dt);
+  // Fichas
+  var focusFire=LEVELS[level].focus;
+  for(i=0;i<units.length;i++){
+    u=units[i]; if(u.hp<=0)continue;
+    var T=TYPES[u.type];
+    u.cd=Math.max(0,u.cd-dt); u.flash=Math.max(0,u.flash-dt);
+    var best=null,bd=1e18,bm=0,R2=T.range*T.range,minR2=T.minRange?T.minRange*T.minRange:0;
+    for(k=0;k<units.length;k++){
+      var e=units[k]; if(e.team===u.team||e.hp<=0)continue;
+      var dd=d2(e,u); if(dd>R2||dd<minR2)continue;
+      var mu=MULT[u.type][e.type];
+      if(mu>bm||(mu===bm&&(focusFire&&u.team===RED?e.hp<best.hp:dd<bd))){bm=mu;bd=dd;best=e;}
+    }
+    if(u.focus){
+      if(u.focus.hp<=0)u.focus=null;
+      else if(d2(u.focus,u)<=R2&&d2(u.focus,u)>=minR2)best=u.focus;      // el blanco marcado, si está a tiro, va primero
+    }
+    u.tgt=best;
+    var settled=u.x===hx[u.c]&&u.y===hy[u.c];   // parada en el centro de su hexágono
+    if(best&&settled&&!(u.dis&&u.dc>=0)){
+      // En combate: QUIETA en su hexágono, disparando (si venía en camino, primero termina de llegar)
+      u.dis=false;
+      if(!u.fight){u.fight=true;u.cd=Math.max(u.cd,0.4);}
+      u.calm=0;
+      if(u.cd<=0){
+        u.cd=T.reload;u.flash=0.12;
+        fx.push({k:'shot',x1:u.x,y1:u.y,x2:best.x,y2:best.y,t:0.14,d:0.14,w:u.type==='art'?4:u.type==='tank'?3:u.type==='at'?2.4:1.5});
+        best.hp-=damage(u,best);best.calm=0;
+        if(u.type==='art')fx.push({k:'mark',x:best.x,y:best.y,t:0.35,d:0.35});
+        if(best.hp<=0)kill(best);
+      }
+    }else{
+      if(!best)u.dis=false;
+      u.fight=false;u.calm+=dt;
+      if(best&&u.dis&&u.dc>=0&&T.dmg>0&&u.cd<=0){      // se retira del combate: sigue disparando, pero a la mitad de efectividad
+        u.cd=T.reload;u.flash=0.12;u.calm=0;
+        fx.push({k:'shot',x1:u.x,y1:u.y,x2:best.x,y2:best.y,t:0.14,d:0.14,w:1.2});
+        best.hp-=0.5*damage(u,best);best.calm=0;
+        if(best.hp<=0)kill(best);
+      }
+      advance(u,dt);
+    }
+    if(u.hungry){u.hp-=T.hp*0.035*dt;if(u.hp<=0)kill(u);}
+    u.healing=false;
+  }
+  // Médicos: cada uno repara a UNA sola ficha por vez, la más dañada de su hexágono o los de al lado,
+  // y solo si esa ficha lleva 3 s sin pelear ni recibir disparos
+  for(i=0;i<units.length;i++){
+    var md=units[i];if(md.type!=='amb'||md.hp<=0)continue;
+    var pat=null,pr=1;
+    for(k=0;k<units.length;k++){
+      var w=units[k];
+      if(w.team!==md.team||w===md||w.hp<=0||w.hungry||w.healing||w.calm<=3)continue;       // a cualquiera menos a sí mismo (un médico cura a otro)
+      var wr=w.hp/TYPES[w.type].hp;
+      if(wr<pr&&d2(w,md)<=HOSP_R*HOSP_R){pr=wr;pat=w;}
+    }
+    if(pat){pat.healing=true;pat.hp=Math.min(TYPES[pat.type].hp,pat.hp+TYPES[pat.type].hp*HOSP_HEAL*dt);}
+  }
+  units=units.filter(function(x){return x.hp>0;});
+  // Conquista: una ficha parada sobre la ciudad
+  for(i=0;i<cities.length;i++){
+    c=cities[i];var on=null;
+    for(k=0;k<units.length;k++){u=units[k];if(u.c===c.k&&u.fc<0&&Math.abs(u.x-c.x)<1&&Math.abs(u.y-c.y)<1){on=u;break;}}
+    if(on&&on.team!==c.owner){
+      if(c.capBy!==on.team){c.capBy=on.team;c.cap=0;}
+      c.cap+=dt;
+      if(c.cap>=CAP_TIME){
+        c.owner=on.team;c.cap=0;if(c.queue){c.queue=[];c.bt=0;c.rally=-1;}   // la cola de producción se pierde
+        fx.push({k:'ring',x:c.x,y:c.y,t:0.9,d:0.9,r:22*U,team:c.owner});
+      }
+    }else c.cap=Math.max(0,c.cap-dt*2);
+  }
+  for(i=0;i<fx.length;i++)fx[i].t-=dt;
+  fx=fx.filter(function(f){return f.t>0;});
+  claimT-=dt; if(claimT<=0){claimT=0.25;claim();checkEnd();}
+  hungerT-=dt; if(hungerT<=0){hungerT=1;hunger();}
+  terrT-=dt;                                       // una vez por minuto: extra de oro según el territorio de cada bando
+  if(terrT<=0){
+    terrT+=60;
+    var tb=Math.round(pct[BLUE]*TERR_GOLD),tr=Math.round(pct[RED]*TERR_GOLD);
+    gold[BLUE]+=tb;gold[RED]+=tr;bonus={t:time,v:tb};
+  }
+  if(!over&&time>=ai.next){ai.next=time+LEVELS[level].think;aiThink();}
+  hudT-=dt; if(hudT<=0){hudT=0.25;updateHud();}
+}
+
+// Territorio: cada ficha toma su hexágono y los vecinos; gana la ficha más cercana
+function claim(){
+  var i,k,d,R2=HW*HW*1.3;
+  bestD.fill(1e9);
+  for(i=0;i<cities.length;i++)if(cities[i].owner!==NEUTRAL){bestD[cities[i].k]=0;bestT[cities[i].k]=sign(cities[i].owner);}
+  for(i=0;i<units.length;i++){
+    var u=units[i],h=hexAt(u.x,u.y);
+    for(d=-1;d<6;d++){
+      k=d<0?h:nb[h][d];if(k<0)continue;
+      var dx=hx[k]-u.x,dy=hy[k]-u.y,dd=dx*dx+dy*dy;
+      if(dd<=R2&&dd<bestD[k]){bestD[k]=dd;bestT[k]=sign(u.team);}
+    }
+  }
+  for(k=0;k<NC;k++)if(bestD[k]<1e9)own[k]=bestT[k];
+  // Bolsones rodeados sin ciudad ni ficha propia: se pierden
+  comp.fill(-1);
+  var anchored=[],stack=[],nc=0;
+  for(k=0;k<NC;k++){
+    if(comp[k]>=0)continue;
+    var s=own[k];comp[k]=nc;stack.push(k);
+    while(stack.length){
+      var n=stack.pop();
+      for(d=0;d<6;d++){var m=nb[n][d];if(m>=0&&comp[m]<0&&own[m]===s){comp[m]=nc;stack.push(m);}}
+    }
+    anchored.push(false);nc++;
+  }
+  for(i=0;i<cities.length;i++){k=cities[i].k;if(cities[i].owner!==NEUTRAL&&own[k]===sign(cities[i].owner))anchored[comp[k]]=true;}
+  for(i=0;i<units.length;i++){k=hexAt(units[i].x,units[i].y);if(own[k]===sign(units[i].team))anchored[comp[k]]=true;}
+  for(k=0;k<NC;k++)if(!anchored[comp[k]])own[k]=-own[k];
+  ownVer++;
+  countTerritory();
+}
+function countTerritory(){
+  var b=0;for(var k=0;k<NC;k++)if(own[k]>0)b++;
+  pct[BLUE]=b/NC*100;pct[RED]=100-pct[BLUE];
+}
+
+// Suministro: 5 fichas por ciudad; las que sobran (las más alejadas) pasan hambre
+function hunger(){
+  for(var t=0;t<2;t++){
+    var mine=units.filter(function(u){return u.team===t;});
+    var cs=cities.filter(function(c){return c.owner===t;});
+    var excess=mine.length-cs.length*SUPPLY;
+    mine.forEach(function(u){
+      u.hungry=false;u._far=1e18;
+      cs.forEach(function(c){u._far=Math.min(u._far,d2(u,c));});
+    });
+    if(excess>0){
+      mine.sort(function(a,b){return b._far-a._far;});
+      for(var i=0;i<excess;i++)mine[i].hungry=true;
+    }
+  }
+}
+
+var WIN_PCT=90;
+// Fábricas que tiene cada bando (las propias y las que le tomó al otro). Devuelve [azules, rojas]
+function fabCount(){
+  var b=0,r=0;
+  cities.forEach(function(c){if(!c.type)return;if(c.owner===BLUE)b++;else if(c.owner===RED)r++;});
+  return [b,r];
+}
+// Se gana dejando al oponente sin edificios (tomándole las fábricas y el cuartel) o controlando el 90% del territorio
+function checkEnd(){
+  if(over)return;
+  var f=fabCount();
+  if(f[1]===0||pct[BLUE]>=WIN_PCT)finish(true,f[1]===0?'Dejaste a la IA sin fábricas ni cuartel.':'Controlás el '+WIN_PCT+'% del territorio.');
+  else if(f[0]===0||pct[RED]>=WIN_PCT)finish(false,f[0]===0?'La IA te dejó sin fábricas ni cuartel.':'La IA controla el '+WIN_PCT+'% del territorio.');
+}
+function finish(win,text){
+  over=win?'win':'lose';
+  $('endTitle').textContent=win?'¡VICTORIA!':'DERROTA';
+  $('endTitle').style.color=win?'#6fb0ff':'#ff8a7d';
+  $('endText').textContent=text+' Tiempo: '+clock();
+  $('end').style.display='flex';
+  updateHud();
+}
+
+// ---------- IA (mismas reglas y mismas órdenes que el jugador) ----------
+function aiThink(){
+  var mine=units.filter(function(u){return u.team===RED;});
+  var foes=units.filter(function(u){return u.team===BLUE;});
+  var myC=cities.filter(function(c){return c.owner===RED;});
+  var enC=cities.filter(function(c){return c.owner!==RED;});
+  if(!myC.length||!enC.length)return;
+  // Objetivo: la ciudad ajena (vacía o azul) más cercana a una ciudad roja; se reúne delante de esa ciudad roja
+  var target=null,stage=null,bd=1e18;
+  enC.forEach(function(e){myC.forEach(function(m){var dd=d2(e,m);if(dd<bd){bd=dd;target=e;stage=m;}});});
+  var L=Math.sqrt(bd)||1;
+  var sx=stage.x+(target.x-stage.x)/L*HW, sy=stage.y+(target.y-stage.y)/L*HW;
+  var LV=LEVELS[level],waiting=time<LV.wait;
+  // Guarnición: una ficha parada sobre cada fábrica propia (las banderas no llevan: rinden igual vacías)
+  var myF=myC.filter(function(c){return !!c.type;});
+  mine.forEach(function(u){if(u.job==='gar'&&!myF.some(function(c){return c.k===u.garK;}))u.job=null;});
+  myF.forEach(function(c){          // primero: la que ya está parada sobre una ciudad se queda de guarnición
+    if(mine.some(function(u){return u.job==='gar'&&u.garK===c.k;}))return;
+    for(var i=0;i<mine.length;i++)if(mine[i].c===c.k&&mine[i].job!=='gar'&&mine[i].type!=='amb'){mine[i].job='gar';mine[i].garK=c.k;break;}
+  });
+  myF.forEach(function(c){
+    var g=null,i;
+    for(i=0;i<mine.length;i++)if(mine[i].job==='gar'&&mine[i].garK===c.k){g=mine[i];break;}
+    if(!g){
+      for(i=0;i<mine.length;i++)if(mine[i].c===c.k&&mine[i].job!=='gar'){g=mine[i];break;}
+      if(!g){
+        var bdd=1e18;
+        mine.forEach(function(u){if(!u.job&&!u.fight&&u.type!=='amb'){var dd=d2(u,c);if(dd<bdd){bdd=dd;g=u;}}});
+      }
+      if(!g)return;
+      g.job='gar';g.garK=c.k;
+    }
+    if(g.c!==c.k&&g.dc!==c.k&&!g.fight)order([g],c.x,c.y);
+  });
+  // Defensa de ciudades amenazadas
+  mine.forEach(function(u){if(u.job==='def')u.job=null;});
+  myC.forEach(function(c){
+    var thr=foes.filter(function(f){return d2(f,c)<140*U*140*U;}).length;
+    if(!thr)return;
+    var cand=mine.filter(function(u){return u.type!=='amb'&&u.job!=='def'&&u.job!=='atk'&&u.job!=='gar'&&u.job!=='cap'&&d2(u,c)<270*U*270*U;})
+      .sort(function(a,b){return d2(a,c)-d2(b,c);}).slice(0,thr+1);
+    cand.forEach(function(u){u.job='def';});
+    order(cand.filter(function(u){return !u.fight&&u.dc<0&&d2(u,c)>95*U*95*U;}),c.x,c.y);
+  });
+  // Tomar lugares sin defensa (banderas libres, o tuyas pero sin fichas cerca): manda una ficha suelta a cada uno, hasta dos a la vez
+  mine.forEach(function(u){
+    if(u.job!=='cap')return;
+    var cc=cityAtHex(u.capK);
+    if(!cc||cc.owner===RED||foes.some(function(f){return d2(f,cc)<160*U*160*U;}))u.job=null;
+  });
+  if(time>20){
+    var caps=mine.filter(function(u){return u.job==='cap';}).length;
+    enC.slice().sort(function(a,b){return d2(a,stage)-d2(b,stage);}).forEach(function(c){
+      if(caps>=LV.caps||foes.some(function(f){return d2(f,c)<160*U*160*U;}))return;
+      if(mine.some(function(u){return u.job==='cap'&&u.capK===c.k;}))return;
+      var g=null,bdd=1e18;
+      mine.forEach(function(u){if(!u.job&&!u.fight&&u.type!=='amb'&&u.type!=='art'&&u.type!=='cmd'){var dd=d2(u,c);if(dd<bdd){bdd=dd;g=u;}}});
+      if(!g)return;
+      g.job='cap';g.capK=c.k;caps++;
+    });
+    mine.forEach(function(u){if(u.job==='cap'&&!u.fight&&u.c!==u.capK&&u.dc!==u.capK)order([u],hx[u.capK],hy[u.capK]);});
+  }
+  function far(u,R){return (u.x-sx)*(u.x-sx)+(u.y-sy)*(u.y-sy)>R*R;}
+  // Nivel 3: la ficha malherida (menos del 40% de vida) se retira al punto de reunión, donde esperan los médicos, y vuelve cuando se recupera
+  if(LV.heal&&ambCount(RED)>0){
+    mine.forEach(function(u){
+      var hp=u.hp/TYPES[u.type].hp;
+      if(u.job==='heal'){if(hp>=0.85)u.job=null;}
+      else if(u.type!=='amb'&&u.job!=='gar'&&hp<0.4)u.job='heal';
+      if(u.job==='heal'&&u.dc<0&&far(u,135*U))order([u],sx,sy);
+    });
+  }else mine.forEach(function(u){if(u.job==='heal')u.job=null;});
+  var pool=mine.filter(function(u){return !u.job;});
+  var atk=mine.filter(function(u){return u.job==='atk';});
+  // Las fichas nuevas van al punto de reunión y esperan ahí
+  order(pool.filter(function(u){return !u.fight&&u.dc<0&&far(u,135*U);}),sx,sy);
+  if(!waiting){
+    // Cuando hay suficientes reunidas, salen juntas, en bloque, hacia el objetivo
+    var ready=pool.filter(function(u){return u.type!=='amb'&&!u.fight&&u.dc<0&&!far(u,140*U);});
+    // IA moderada: oleadas chicas (hasta 5 fichas) y con una pausa entre una y otra; el resto queda de reserva
+    // Si el objetivo está defendido, junta más: tantas como defensores más dos (hasta 8). Si a los 2 minutos no llegó, sale igual.
+    var defN=foes.filter(function(f){return f.type!=='amb'&&d2(f,target)<200*U*200*U;}).length;
+    var need=Math.max(ai.waves?4:3,Math.min(8,defN+2));
+    if(time>=ai.cool&&(ready.length>=need||(ready.length>=4&&time-ai.cool>75))){      // la primera oleada sale con 3; las siguientes, con 4 o más
+      if(LV.heal){                               // nivel 3: oleada mezclada (va alternando infantería, antitanque y tanque)
+        var by={inf:[],at:[],tank:[],art:[],cmd:[]},mixd=[];
+        ready.forEach(function(u){by[u.type].push(u);});
+        while(mixd.length<ready.length)['tank','inf','at','art','cmd'].forEach(function(t){if(by[t].length)mixd.push(by[t].shift());});
+        ready=mixd;
+      }
+      var wave=ready.slice(0,Math.max(LV.wave,need));
+      wave.forEach(function(u){u.job='atk';});
+      order(wave,target.x,target.y,true);
+      ai.cool=time+LV.cool;ai.waves++;
+    }
+    // Las que ya atacaban y quedaron libres siguen al próximo objetivo
+    order(atk.filter(function(u){return !u.fight&&u.dc<0&&u.c!==target.k;}),target.x,target.y,true);
+  }
+}
+
+// ---------- Dibujo ----------
+function rrect(x,y,w,h,r){
+  ctx.beginPath();
+  ctx.moveTo(x+r,y);ctx.lineTo(x+w-r,y);ctx.arcTo(x+w,y,x+w,y+r,r);
+  ctx.lineTo(x+w,y+h-r);ctx.arcTo(x+w,y+h,x+w-r,y+h,r);
+  ctx.lineTo(x+r,y+h);ctx.arcTo(x,y+h,x,y+h-r,r);
+  ctx.lineTo(x,y+r);ctx.arcTo(x,y,x+r,y,r);ctx.closePath();
+}
+function icon(type,x,y,k,team,wheel){
+  var dir=team===RED?-1:1;
+  ctx.save();ctx.translate(x,y);ctx.scale(k*dir,k);
+  ctx.strokeStyle='#f3eed6';ctx.fillStyle='#f3eed6';ctx.lineCap='round';ctx.lineJoin='round';
+  if(type==='inf'){
+    ctx.beginPath();ctx.arc(0,-5.2,2.4,0,6.2832);ctx.fill();
+    ctx.lineWidth=2.4;ctx.beginPath();ctx.moveTo(0,-2.2);ctx.lineTo(0,2.2);ctx.stroke();
+    ctx.lineWidth=1.9;ctx.beginPath();
+    ctx.moveTo(-3,7);ctx.lineTo(0,2.2);ctx.lineTo(3,7);
+    ctx.moveTo(-3.4,0.8);ctx.lineTo(0,-1.4);ctx.lineTo(3.4,0.8);ctx.stroke();
+  }else if(type==='amb'){
+    ctx.fillStyle=wheel;ctx.fillRect(-2.6,-8,5.2,16);ctx.fillRect(-8,-2.6,16,5.2);                 // cruz
+  }else if(type==='art'){
+    ctx.lineWidth=4.6;ctx.beginPath();ctx.moveTo(-4.5,3.5);ctx.lineTo(2.5,-7.5);ctx.stroke();        // obús: caño corto, grueso y bien empinado
+    ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(-5,6);ctx.lineTo(-11.5,8.5);ctx.stroke();             // mástil
+    ctx.lineWidth=2.2;ctx.beginPath();ctx.arc(-5,5,4.2,0,6.2832);ctx.stroke();                       // rueda
+    ctx.lineWidth=1.7;                                                                               // fogonazo en la boca
+    [[-0.25,4.6],[-0.95,5.2],[0.45,4.6],[-1.75,3.8]].forEach(function(f){ctx.beginPath();ctx.moveTo(5.2+Math.cos(f[0])*1.8,-10+Math.sin(f[0])*1.8);ctx.lineTo(5.2+Math.cos(f[0])*f[1],-10+Math.sin(f[0])*f[1]);ctx.stroke();});
+  }else if(type==='cmd'){
+    ctx.beginPath();
+    for(var s5=0;s5<10;s5++){var ra=s5%2?3.9:9.4,an=-Math.PI/2+s5*Math.PI/5;ctx.lineTo(Math.cos(an)*ra,Math.sin(an)*ra+0.6);}
+    ctx.closePath();ctx.fill();                                                                      // estrella
+  }else if(type==='at'){
+    ctx.lineWidth=2.6;ctx.beginPath();ctx.moveTo(-3,0.5);ctx.lineTo(10,-4.2);ctx.stroke();       // caño
+    ctx.lineWidth=1.8;ctx.beginPath();ctx.moveTo(-2,2);ctx.lineTo(-9.5,6.5);ctx.stroke();          // mástil
+    ctx.lineWidth=2.4;ctx.beginPath();ctx.moveTo(0.5,-6.5);ctx.lineTo(0.5,3);ctx.stroke();         // escudo
+    ctx.lineWidth=1.8;ctx.beginPath();ctx.arc(-2,4,3.6,0,6.2832);ctx.stroke();                     // rueda
+    ctx.beginPath();ctx.arc(-2,4,1,0,6.2832);ctx.fill();
+  }else{
+    rrect(-9,1.5,18,6,3);ctx.fill();
+    rrect(-5.5,-4.6,10,6.5,1.5);ctx.fill();
+    ctx.lineWidth=2.3;ctx.beginPath();ctx.moveTo(3,-2.2);ctx.lineTo(11,-2.2);ctx.stroke();
+    ctx.fillStyle=wheel;
+    for(var i=-1;i<=1;i++){ctx.beginPath();ctx.arc(i*5,4.5,1.4,0,6.2832);ctx.fill();}
+  }
+  ctx.restore();
+}
+
+// Contornos de cada territorio y línea de frente. Solo cambian cuando cambia el territorio.
+function rebuildBoardCache(){
+  var front=new Path2D(),k,d,i;
+  // Línea de frente: los lados entre hexágonos de distinto dueño, encadenados y con las esquinas redondeadas
+  var segs=[],map={};
+  function key(x,y){return Math.round(x*2)+','+Math.round(y*2);}
+  for(k=0;k<NC;k++)for(d=0;d<3;d++){
+    var n=nb[k][d];
+    if(n>=0&&own[n]!==own[k])segs.push([hx[k]+VX[d],hy[k]+VY[d],hx[k]+VX[d+1],hy[k]+VY[d+1]]);
+  }
+  segs.forEach(function(sg,si){
+    var a=key(sg[0],sg[1]),b=key(sg[2],sg[3]);
+    (map[a]=map[a]||[]).push(si);(map[b]=map[b]||[]).push(si);
+  });
+  var used=new Uint8Array(segs.length);
+  function extend(pts,atEnd){
+    for(;;){
+      var p=atEnd?pts[pts.length-1]:pts[0],kk=key(p[0],p[1]),lst=map[kk]||[],nx=-1;
+      for(var q=0;q<lst.length;q++)if(!used[lst[q]]){nx=lst[q];break;}
+      if(nx<0)return;
+      used[nx]=1;
+      var sg=segs[nx],other=key(sg[0],sg[1])===kk?[sg[2],sg[3]]:[sg[0],sg[1]];
+      if(atEnd)pts.push(other);else pts.unshift(other);
+    }
+  }
+  for(i=0;i<segs.length;i++){
+    if(used[i])continue;
+    used[i]=1;
+    var pts=[[segs[i][0],segs[i][1]],[segs[i][2],segs[i][3]]];
+    extend(pts,true);extend(pts,false);
+    var m=pts.length,closed=m>3&&key(pts[0][0],pts[0][1])===key(pts[m-1][0],pts[m-1][1]);
+    if(closed){
+      pts.pop();m--;
+      front.moveTo((pts[0][0]+pts[1][0])/2,(pts[0][1]+pts[1][1])/2);
+      for(var q2=1;q2<=m;q2++){var A=pts[q2%m],B=pts[(q2+1)%m];front.quadraticCurveTo(A[0],A[1],(A[0]+B[0])/2,(A[1]+B[1])/2);}
+      front.closePath();
+    }else{
+      front.moveTo(pts[0][0],pts[0][1]);
+      for(q2=1;q2<m-1;q2++)front.quadraticCurveTo(pts[q2][0],pts[q2][1],(pts[q2][0]+pts[q2+1][0])/2,(pts[q2][1]+pts[q2+1][1])/2);
+      front.lineTo(pts[m-1][0],pts[m-1][1]);
+    }
+  }
+  // El tablero (terreno + velo de color del territorio) vive en un lienzo aparte, veilCv, y en cada cuadro solo se copia.
+  // Cuando cambia el territorio se repintan únicamente los hexágonos que cambiaron de dueño (pintar los 3.600 es caro).
+  if(!veilCv)veilCv=document.createElement('canvas');
+  var full=!veilOwn||veilOwn.length!==NC||veilCv.width!==terrCv.width||veilCv.height!==terrCv.height;
+  if(full){veilCv.width=terrCv.width;veilCv.height=terrCv.height;veilOwn=new Int8Array(NC);}
+  var vc=veilCv.getContext('2d'),BLUEV='rgba(20,90,255,.17)',REDV='rgba(255,40,25,.15)';
+  if(full){
+    var pb=new Path2D(),pr=new Path2D();
+    for(k=0;k<NC;k++){hexPath(own[k]>0?pb:pr,k);veilOwn[k]=own[k];}
+    vc.setTransform(1,0,0,1,0,0);vc.drawImage(terrCv,0,0);vc.setTransform(TERR_RES,0,0,TERR_RES,0,0);
+    vc.fillStyle=BLUEV;vc.fill(pb);vc.fillStyle=REDV;vc.fill(pr);
+  }else{
+    var R=TERR_RES,pad=HS+2;
+    for(k=0;k<NC;k++){
+      if(veilOwn[k]===own[k])continue;
+      veilOwn[k]=own[k];
+      var hp=new Path2D();hexPath(hp,k);
+      var sx=Math.max(0,Math.floor((hx[k]-pad)*R)),sy=Math.max(0,Math.floor((hy[k]-pad)*R)),sw=Math.ceil(2*pad*R),sh=Math.ceil(2*pad*R);
+      vc.save();vc.setTransform(R,0,0,R,0,0);vc.clip(hp);
+      vc.setTransform(1,0,0,1,0,0);vc.drawImage(terrCv,sx,sy,sw,sh,sx,sy,sw,sh);       // el terreno de ese hexágono, limpio
+      vc.fillStyle=own[k]>0?BLUEV:REDV;vc.fillRect(sx,sy,sw,sh);                        // y su velo nuevo
+      vc.restore();
+    }
+  }
+  boardCache={ver:ownVer,front:front};
+}
+function drawBoard(){
+  ctx.fillStyle='rgba(0,0,0,.35)';ctx.fillRect(-6,-6,WX+12,WY+12);      // sombra del tablero sobre la mesa
+  ctx.fillStyle='#232a1c';ctx.fillRect(0,0,WX,WY);
+  if(boardCache.ver!==ownVer)rebuildBoardCache();
+  var front=boardCache.front;
+  // terreno con el velo de color del territorio encima (el pasto se sigue viendo verde), ya compuesto en veilCv
+  ctx.drawImage(veilCv,0,0,WX,WY);
+  // Línea de frente
+  ctx.lineCap='round';ctx.lineJoin='round';
+  ctx.strokeStyle='rgba(8,10,14,.8)';ctx.lineWidth=8;ctx.stroke(front);
+  ctx.lineCap='butt';ctx.setLineDash([HS*0.36,HS*0.17]);
+  ctx.strokeStyle='#ffffff';ctx.lineWidth=4.5;ctx.stroke(front);
+  ctx.setLineDash([]);
+}
+
+// Fábrica con aire de Segunda Guerra: galpón de ladrillo con techo en diente de sierra y vidrios, chimenea alta,
+// portón verde oliva, bolsas de arena y un banderín del color del bando. No es redonda: no se confunde con una ficha.
+function drawBuilding(c,edge){
+  var i;
+  ctx.lineJoin='round';
+  if(c.type==='hq')drawHQ(edge);else drawFactory(edge);
+  // qué está fabricando ahora (y cuántas hay en cola): se ve aunque haya una ficha parada encima
+  if(c.owner===BLUE&&c.queue&&c.queue.length){
+    var q0=c.queue[0];
+    ctx.fillStyle='#232a28';ctx.beginPath();ctx.arc(21,-19,9,0,6.2832);ctx.fill();ctx.strokeStyle='#ffd60a';ctx.lineWidth=2;ctx.stroke();
+    icon(q0,21,-19,q0==='inf'?0.62:q0==='amb'?0.6:0.52,BLUE,q0==='amb'?'#ff5a4d':'#232a28');
+    if(c.queue.length>1){
+      ctx.fillStyle='#ffd60a';ctx.beginPath();ctx.arc(29,-10,5.5,0,6.2832);ctx.fill();
+      ctx.fillStyle='#1b1400';ctx.font='bold 8px system-ui,Arial,sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(c.queue.length,29,-9.6);
+    }
+  }
+}
+// Cuartel: carpa de mando verde oliva con una gran estrella, bolsas de arena, antena y el banderín del bando
+function drawHQ(edge){
+  var i;
+  ctx.fillStyle=edge;ctx.globalAlpha=0.5;ctx.beginPath();ctx.ellipse(0,15,27,7.5,0,0,6.2832);ctx.fill();ctx.globalAlpha=1;
+  ctx.fillStyle='rgba(0,0,0,.35)';ctx.beginPath();ctx.ellipse(2,16,23,5,0,0,6.2832);ctx.fill();
+  // antena
+  ctx.strokeStyle='#2a2d22';ctx.lineWidth=1.2;ctx.beginPath();ctx.moveTo(15,-6);ctx.lineTo(15,-30);ctx.moveTo(12,-25);ctx.lineTo(18,-25);ctx.moveTo(13,-21);ctx.lineTo(17,-21);ctx.stroke();
+  // carpa: dos aguas
+  ctx.fillStyle='#5f6a45';ctx.strokeStyle='#1c1e14';ctx.lineWidth=1.5;
+  ctx.beginPath();ctx.moveTo(-23,14);ctx.lineTo(-13,-12);ctx.lineTo(13,-12);ctx.lineTo(23,14);ctx.closePath();ctx.fill();ctx.stroke();
+  ctx.fillStyle='#4a5436';ctx.beginPath();ctx.moveTo(-23,14);ctx.lineTo(-13,-12);ctx.lineTo(-7,-12);ctx.lineTo(-12,14);ctx.closePath();ctx.fill();   // faldón en sombra
+  ctx.fillStyle='#2b2f20';ctx.beginPath();ctx.moveTo(-5,14);ctx.lineTo(0,2);ctx.lineTo(5,14);ctx.closePath();ctx.fill();                              // entrada
+  ctx.strokeStyle='#1c1e14';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(-13,-12);ctx.lineTo(13,-12);ctx.stroke();
+  // la estrella
+  ctx.fillStyle='#f3eed6';ctx.strokeStyle=edge;ctx.lineWidth=1.6;ctx.beginPath();
+  for(i=0;i<10;i++){var ra=i%2?3.6:8.6,an=-Math.PI/2+i*Math.PI/5;ctx.lineTo(Math.cos(an)*ra,-4.5+Math.sin(an)*ra);}
+  ctx.closePath();ctx.fill();ctx.stroke();
+  // bolsas de arena
+  ctx.fillStyle='#b9a678';ctx.strokeStyle='#4a4026';ctx.lineWidth=0.8;
+  for(i=0;i<4;i++){ctx.beginPath();ctx.ellipse(-24+i*5.2,15,3,1.9,0,0,6.2832);ctx.fill();ctx.stroke();}
+  for(i=0;i<4;i++){ctx.beginPath();ctx.ellipse(8.5+i*5.2,15,3,1.9,0,0,6.2832);ctx.fill();ctx.stroke();}
+  // mástil y banderín
+  ctx.strokeStyle='#e8e6dc';ctx.lineWidth=1.6;ctx.beginPath();ctx.moveTo(-15,-9);ctx.lineTo(-15,-31);ctx.stroke();
+  ctx.fillStyle=edge;ctx.strokeStyle='#14181a';ctx.lineWidth=1.1;
+  ctx.beginPath();ctx.moveTo(-15,-31);ctx.lineTo(-3,-27.5);ctx.lineTo(-15,-24);ctx.closePath();ctx.fill();ctx.stroke();
+}
+function drawFactory(edge){
+  var i;
+  ctx.fillStyle=edge;ctx.globalAlpha=0.5;ctx.beginPath();ctx.ellipse(0,15,27,7.5,0,0,6.2832);ctx.fill();ctx.globalAlpha=1;   // playón del color del bando
+  ctx.fillStyle='rgba(0,0,0,.35)';ctx.beginPath();ctx.ellipse(2,16,23,5,0,0,6.2832);ctx.fill();                              // sombra
+  // humo
+  ctx.fillStyle='rgba(70,70,66,.55)';
+  ctx.beginPath();ctx.arc(15,-30,3.4,0,6.2832);ctx.arc(19,-35,4.4,0,6.2832);ctx.arc(25,-39,3.4,0,6.2832);ctx.fill();
+  // chimenea de ladrillo
+  ctx.fillStyle='#7a4a38';ctx.strokeStyle='#1c1412';ctx.lineWidth=1.3;
+  ctx.fillRect(11,-27,6.5,20);ctx.strokeRect(11,-27,6.5,20);
+  ctx.fillStyle='#2e2a28';ctx.fillRect(10,-28,8.5,3.2);
+  // muro de ladrillo
+  ctx.fillStyle='#8a5440';ctx.strokeStyle='#1c1412';ctx.lineWidth=1.5;
+  ctx.fillRect(-21,-4,42,18);ctx.strokeRect(-21,-4,42,18);
+  ctx.strokeStyle='rgba(40,22,16,.45)';ctx.lineWidth=0.7;
+  for(i=0;i<3;i++){ctx.beginPath();ctx.moveTo(-21,0.5+i*4.5);ctx.lineTo(21,0.5+i*4.5);ctx.stroke();}
+  // techo en diente de sierra: faldón oscuro y paño de vidrio
+  for(i=0;i<3;i++){
+    var x0=-21+i*14;
+    ctx.fillStyle='#3b423d';ctx.beginPath();ctx.moveTo(x0,-4);ctx.lineTo(x0,-14);ctx.lineTo(x0+14,-4);ctx.closePath();ctx.fill();
+    ctx.fillStyle='#9db7bd';ctx.fillRect(x0,-13,2.6,9);
+    ctx.strokeStyle='#1c1412';ctx.lineWidth=1.3;ctx.beginPath();ctx.moveTo(x0,-4);ctx.lineTo(x0,-14);ctx.lineTo(x0+14,-4);ctx.stroke();
+  }
+  // ventanas con parteluz y portón oliva
+  ctx.fillStyle='#c9d6c4';ctx.strokeStyle='#1c1412';ctx.lineWidth=0.9;
+  for(i=0;i<2;i++){ctx.fillRect(-17+i*9,0,6,6);ctx.strokeRect(-17+i*9,0,6,6);ctx.beginPath();ctx.moveTo(-14+i*9,0);ctx.lineTo(-14+i*9,6);ctx.stroke();}
+  ctx.fillStyle='#4d5c3a';ctx.fillRect(3,-1,13,15);ctx.strokeRect(3,-1,13,15);
+  ctx.beginPath();ctx.moveTo(9.5,-1);ctx.lineTo(9.5,14);ctx.stroke();
+  // bolsas de arena
+  ctx.fillStyle='#b9a678';ctx.strokeStyle='#4a4026';ctx.lineWidth=0.8;
+  for(i=0;i<5;i++){ctx.beginPath();ctx.ellipse(-20+i*5.2,14.5,3,1.9,0,0,6.2832);ctx.fill();ctx.stroke();}
+  for(i=0;i<4;i++){ctx.beginPath();ctx.ellipse(-17.4+i*5.2,11.6,3,1.9,0,0,6.2832);ctx.fill();ctx.stroke();}
+  // mástil y banderín del bando
+  ctx.strokeStyle='#e8e6dc';ctx.lineWidth=1.6;ctx.beginPath();ctx.moveTo(-18,-13);ctx.lineTo(-18,-31);ctx.stroke();
+  ctx.fillStyle=edge;ctx.strokeStyle='#14181a';ctx.lineWidth=1.1;
+  ctx.beginPath();ctx.moveTo(-18,-31);ctx.lineTo(-6,-27.5);ctx.lineTo(-18,-24);ctx.closePath();ctx.fill();ctx.stroke();
+}
+function drawCity(c){
+  var X=0,Y=0,RX=c.x,RY=c.y;ctx.save();ctx.translate(RX,RY);ctx.scale(U,U);
+  var neutral=c.owner===NEUTRAL,edge=neutral?'#b9b9ad':COL[c.owner].edge;
+  if(c.type){
+    drawBuilding(c,edge);
+  }else{
+    // bandera (o la del pueblo, más grande): gris si está libre, del color de quien la tomó
+    var fc=neutral?'#cfcfc4':COL[c.owner].fill;
+    if(c.town){ctx.scale(1.25,1.25);}
+    ctx.strokeStyle=edge;ctx.lineWidth=2;ctx.setLineDash([4,4]);ctx.beginPath();ctx.arc(X,Y,19,0,6.2832);ctx.stroke();ctx.setLineDash([]);
+    ctx.fillStyle='rgba(0,0,0,.35)';ctx.beginPath();ctx.ellipse(X-6,Y+17,8,3,0,0,6.2832);ctx.fill();       // sombra del pie
+    ctx.strokeStyle='#f1f1ea';ctx.lineWidth=3;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(X-8,Y+17);ctx.lineTo(X-8,Y-24);ctx.stroke();   // mástil
+    ctx.beginPath();ctx.moveTo(X-8,Y-24);ctx.quadraticCurveTo(X+2,Y-29,X+10,Y-23);ctx.quadraticCurveTo(X+16,Y-19,X+22,Y-22);
+    ctx.lineTo(X+22,Y-7);ctx.quadraticCurveTo(X+16,Y-4,X+10,Y-8);ctx.quadraticCurveTo(X+2,Y-14,X-8,Y-9);ctx.closePath();
+    ctx.fillStyle=fc;ctx.fill();ctx.strokeStyle='#14181a';ctx.lineWidth=1.6;ctx.stroke();
+  }
+  if(c.cap>0){
+    ctx.strokeStyle='#ffd60a';ctx.lineWidth=4;ctx.lineCap='butt';
+    ctx.beginPath();ctx.arc(X,Y,23.5,-1.5708,-1.5708+6.2832*c.cap/CAP_TIME);ctx.stroke();
+  }
+  ctx.font='bold 10px system-ui,Arial,sans-serif';ctx.textAlign='center';ctx.textBaseline='top';
+  if(neutral){ctx.restore();return;}        // bandera libre: sin cartel (se ve gris)
+  var txt='+'+cityYield(c);
+  ctx.lineWidth=3;ctx.strokeStyle='rgba(0,0,0,.6)';ctx.lineJoin='round';ctx.strokeText(txt,X,Y+25);
+  ctx.fillStyle=c.owner===BLUE?'#8ec0ff':'#ffaaa0';ctx.fillText(txt,X,Y+25);
+  ctx.restore();
+}
+
+function drawUnit(u){
+  var X=0,Y=0,RX=u.x,RY=u.y;ctx.save();ctx.translate(RX,RY);ctx.scale(U,U);
+  var T=TYPES[u.type],r=T.r,col=COL[u.team],tk=u.type==='tank';
+  // (la artillería es la única ficha cuadrada, de puntas redondeadas: se distingue de lejos del antitanque)
+  function tok(ox,oy,R){
+    ctx.beginPath();
+    if(u.type!=='art'){ctx.arc(X+ox,Y+oy,R,0,6.2832);return;}
+    var h=R*0.93,q=R*0.34,x=X+ox,y=Y+oy;
+    ctx.moveTo(x-h+q,y-h);ctx.arcTo(x+h,y-h,x+h,y+h,q);ctx.arcTo(x+h,y+h,x-h,y+h,q);ctx.arcTo(x-h,y+h,x-h,y-h,q);ctx.arcTo(x-h,y-h,x+h,y-h,q);ctx.closePath();
+  }
+  // Ficha de chapa pintada: canto oscuro, aro color hueso, disco del color del bando con brillo arriba y sombra abajo
+  var amb=u.type==='amb',at=u.type==='at',art=u.type==='art',cmd=u.type==='cmd';
+  ctx.fillStyle='rgba(0,0,0,.4)';tok(1.2,3,r+2.2);ctx.fill();
+  ctx.fillStyle='#15180f';tok(0,0,r+2.4);ctx.fill();                       // canto
+  ctx.fillStyle=amb?col.fill:cmd?'#ffd60a':'#e9e3c4';tok(0,0,r+1.3);ctx.fill();          // aro (dorado: comandante)
+  ctx.fillStyle=amb?'#efe9cf':tk?col.dark:col.fill;tok(0,0,r-1.6);ctx.fill();   // disco
+  ctx.save();tok(0,0,r-1.6);ctx.clip();
+  if(art){ctx.fillStyle=col.dark;ctx.beginPath();ctx.moveTo(X+r*0.35,Y-r);ctx.lineTo(X+r,Y-r);ctx.lineTo(X+r,Y+r);ctx.lineTo(X-r*0.35,Y+r);ctx.closePath();ctx.fill();}   // artillería: disco partido en dos tonos
+  ctx.fillStyle='rgba(255,255,255,.16)';ctx.beginPath();ctx.arc(X,Y-r*0.95,r*1.05,0,6.2832);ctx.fill();      // brillo
+  ctx.fillStyle='rgba(0,0,0,.2)';ctx.beginPath();ctx.arc(X,Y+r*1.5,r*1.15,0,6.2832);ctx.fill();              // sombra
+  ctx.restore();
+  ctx.strokeStyle='rgba(0,0,0,.45)';ctx.lineWidth=0.9;tok(0,0,r-1.6);ctx.stroke();
+  if(tk){ctx.strokeStyle=col.edge;ctx.lineWidth=1.8;tok(0,0,r-3.4);ctx.stroke();}        // tanque: disco oscuro con aro del bando
+  if(at){ctx.strokeStyle=col.dark;ctx.lineWidth=2.2;ctx.setLineDash([4.2,2.6]);tok(0,0,r-3.2);ctx.stroke();ctx.setLineDash([]);}   // antitanque: aro punteado
+  icon(u.type,X,Y,tk?0.95:at?0.85:art?0.82:cmd?0.95:1.05,u.team,amb?'#c22a20':col.dark);
+  if(u.sel){
+    ctx.strokeStyle='#ffd60a';ctx.lineWidth=2.5;ctx.setLineDash([5,3.5]);
+    ctx.beginPath();ctx.arc(X,Y,r+5.5,0,6.2832);ctx.stroke();ctx.setLineDash([]);
+  }
+  if(u.flash>0&&u.tgt){
+    var dx=u.tgt.x-RX,dy=u.tgt.y-RY,l=Math.sqrt(dx*dx+dy*dy)||1;
+    ctx.fillStyle='#ffe95c';ctx.beginPath();ctx.arc(X+dx/l*r,Y+dy/l*r,tk?4.5:3,0,6.2832);ctx.fill();
+  }
+  if(u.hp<T.hp){
+    var w=r*2,f=Math.max(0,u.hp/T.hp);
+    ctx.fillStyle='#0b0d12';ctx.fillRect(X-r-1,Y+r+3,w+2,5);
+    ctx.fillStyle=f>0.5?'#3ddc6a':f>0.25?'#ffc233':'#ff4b3a';ctx.fillRect(X-r,Y+r+4,w*f,3);
+  }
+  if(u.healing){             // cruz verde: se está reparando en un hospital
+    var gx=X-r*0.85,gy=Y-r*0.85;
+    ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(gx,gy,5.5,0,6.2832);ctx.fill();
+    ctx.fillStyle='#19b84a';ctx.fillRect(gx-1.3,gy-4,2.6,8);ctx.fillRect(gx-4,gy-1.3,8,2.6);
+  }
+  if(fortified(u)){          // escudo: protegida por la fábrica
+    var sx=X+r*0.8,sy=Y+r*0.75;
+    ctx.beginPath();ctx.moveTo(sx-4.5,sy-5);ctx.lineTo(sx+4.5,sy-5);ctx.lineTo(sx+4.5,sy);
+    ctx.quadraticCurveTo(sx+4,sy+4.5,sx,sy+6);ctx.quadraticCurveTo(sx-4,sy+4.5,sx-4.5,sy);ctx.closePath();
+    ctx.fillStyle='#e9e9e2';ctx.fill();ctx.strokeStyle='#1b211f';ctx.lineWidth=1.2;ctx.stroke();
+  }
+  if(u.hungry){
+    ctx.fillStyle='#ff9f0a';ctx.beginPath();ctx.arc(X+r*0.8,Y-r*0.8,5.5,0,6.2832);ctx.fill();
+    ctx.strokeStyle='#000';ctx.lineWidth=1;ctx.stroke();
+    ctx.fillStyle='#000';ctx.font='bold 9px Arial,sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText('!',X+r*0.8,Y-r*0.8+0.5);
+  }
+  ctx.restore();
+}
+
+// Menú de la fábrica elegida: dos botones (infantería / tanque) con su precio
+function drawMenu(){
+  menuRects=[];menuBox=null;
+  if(!menu)return;
+  if(menu.owner!==BLUE||!menu.type||cities.indexOf(menu)<0){menu=null;return;}
+  // Recuadro chico, del mismo estilo que el de las fichas apiladas: una fila de botones (ícono y precio),
+  // la cola en casilleros mínimos y una línea de ayuda. Tamaño fijo en pantalla (S), con cualquier zoom.
+  var S=uiU(),types=PROD[menu.type],n=types.length,pad=4*S,bw=45*S,bh=21*S,gap=3*S,qs=17*S,qg=2.5*S;
+  var w=n*bw+(n-1)*gap+2*pad,h=pad+bh+4*S+qs+3*S+9*S+pad;
+  var vx0=Math.max(0,view.ox),vy0=Math.max(0,view.oy),vx1=Math.min(WX,view.ox+visW()),vy1=Math.min(WY,view.oy+visH());   // parte del tablero que se ve
+  var px=Math.max(vx0+4*S,Math.min(vx1-4*S-w,menu.x-w/2)),py=menu.y-33*U-5*S-h;
+  if(py<vy0+4*S)py=menu.y+28*U+5*S;
+  if(py+h>vy1-4*S)py=Math.max(vy0+4*S,vy1-4*S-h);
+  menuBox={x:px,y:py,w:w,h:h};
+  rrect(px,py,w,h,5*S);ctx.fillStyle='rgba(30,35,24,.93)';ctx.fill();ctx.strokeStyle='#8a8f66';ctx.lineWidth=1.2*S;ctx.stroke();
+  function mini(type,cx,cy,r){                 // ficha en miniatura
+    var amb=type==='amb',col=COL[BLUE];
+    ctx.fillStyle=amb?col.fill:type==='cmd'?'#ffd60a':'#e9e3c4';ctx.beginPath();ctx.arc(cx,cy,r,0,6.2832);ctx.fill();
+    ctx.fillStyle=amb?'#efe9cf':(type==='tank'||type==='art')?col.dark:col.fill;ctx.beginPath();ctx.arc(cx,cy,r*0.84,0,6.2832);ctx.fill();
+    icon(type,cx,cy,(type==='inf'||amb?0.065:0.055)*r,BLUE,amb?'#c22a20':col.dark);
+  }
+  var x0=px+pad,by=py+pad;
+  // botones: qué fabricar
+  types.forEach(function(type,k){
+    var bx=x0+k*(bw+gap),why=canBuy(type),ok=!why;
+    menuRects.push({x:bx,y:by,w:bw,h:bh,type:type});
+    rrect(bx,by,bw,bh,4*S);
+    ctx.fillStyle=ok?'rgba(255,214,10,.13)':'rgba(255,255,255,.05)';ctx.fill();
+    ctx.strokeStyle=ok?'rgba(255,214,10,.85)':'rgba(255,255,255,.2)';ctx.lineWidth=1*S;ctx.stroke();
+    ctx.globalAlpha=ok?1:0.45;mini(type,bx+11*S,by+bh/2,8.2*S);ctx.globalAlpha=1;
+    ctx.font='bold '+(10.5*S).toFixed(2)+'px system-ui,Arial,sans-serif';ctx.textAlign='left';ctx.textBaseline='middle';
+    ctx.fillStyle=ok?'#ffd60a':(why==='oro'?'#ff8a7d':'#9a9a8c');
+    ctx.fillText(COST[type],bx+21.5*S,by+bh/2+0.5*S);
+  });
+  // cola de producción: casilleros; el primero muestra el avance, y un click en cualquiera lo cancela
+  var qy=by+bh+4*S;
+  for(var q=0;q<QMAX;q++){
+    var sx=x0+q*(qs+qg),t=menu.queue[q];
+    rrect(sx,qy,qs,qs,3*S);ctx.fillStyle=t?'rgba(0,0,0,.35)':'rgba(255,255,255,.05)';ctx.fill();
+    ctx.strokeStyle=t?(q===0?'#ffd60a':'#8a8f66'):'rgba(255,255,255,.14)';ctx.lineWidth=0.9*S;ctx.stroke();
+    if(!t)continue;
+    menuRects.push({x:sx,y:qy,w:qs,h:qs,cancel:q});
+    mini(t,sx+qs/2,qy+qs/2-(q===0?1.5*S:0),5.8*S);
+    if(q===0){
+      var pr=Math.min(1,menu.bt/buildTime(menu,t));
+      ctx.fillStyle='rgba(0,0,0,.65)';ctx.fillRect(sx+2*S,qy+qs-4*S,qs-4*S,2.4*S);
+      ctx.fillStyle='#ffd60a';ctx.fillRect(sx+2*S,qy+qs-4*S,(qs-4*S)*pr,2.4*S);
+    }
+  }
+  ctx.textAlign='right';ctx.textBaseline='middle';ctx.font='bold '+(8.5*S).toFixed(2)+'px system-ui,Arial,sans-serif';
+  if(menu.queue.length){
+    var left=Math.max(0,Math.ceil(buildTime(menu,menu.queue[0])-menu.bt));
+    ctx.fillStyle='#ffd60a';ctx.fillText(left>0?left+' s':'sin lugar',px+w-pad,qy+qs/2);
+  }else{ctx.fillStyle='#8f937c';ctx.fillText('cola vacía',px+w-pad,qy+qs/2);}
+  // última línea: un aviso si hay algo que decir; si no, cómo se usa el punto de reunión
+  var why0=canBuy(types[0]),note=why0==='cola'?'Cola llena':why0==='tope'?'Tope de fichas':menu.home!==menu.owner?'Tomado: tarda el doble':'';
+  ctx.textAlign='left';ctx.textBaseline='top';ctx.font='bold '+(7*S).toFixed(2)+'px system-ui,Arial,sans-serif';
+  ctx.fillStyle=note?'#ffb0a6':menu.rally>=0?'#ffd60a':'#a9ad98';
+  ctx.fillText(note||(menu.rally>=0?'⚑ Reunión marcada · der. aquí: quitar':'⚑ Click der. en el mapa: reunión'),x0,qy+qs+3*S);
+}
+
+// Fichas quietas en el hexágono k (una pila si son 2 o más)
+function stackUnits(k){
+  return units.filter(function(u){return u.hp>0&&u.c===k&&u.x===hx[k]&&u.y===hy[k];});
+}
+// Unidad de medida de los recuadros flotantes: 1,25 px de pantalla, con cualquier zoom (no crecen al acercar la vista)
+function uiU(){return 1.25/(scale*view.z);}
+// Panel de pila: una lista chica al costado del hexágono, con una fila por ficha apilada (ícono y barra de vida).
+// Al pasar el mouse se ve; con un click en la pila queda fijo y cada fila se puede clickear para elegir esa ficha.
+function drawStackPanel(k,pinned){
+  var list=stackUnits(k);
+  if(list.length<2){if(pinned)stackPin=-1;return;}
+  var S=uiU(),rw=62*S,rh=21*S,pad=4*S,w=rw+2*pad,h=list.length*rh+2*pad;
+  var vx0=Math.max(0,view.ox),vy0=Math.max(0,view.oy),vx1=Math.min(WX,view.ox+visW()),vy1=Math.min(WY,view.oy+visH());
+  var x0=hx[k]+25*U+6*S;
+  if(x0+w>vx1-4*S)x0=hx[k]-25*U-6*S-w;
+  var y0=Math.max(vy0+4*S,Math.min(vy1-4*S-h,hy[k]-h/2));
+  if(menuBox&&x0<menuBox.x+menuBox.w&&x0+w>menuBox.x&&y0<menuBox.y+menuBox.h&&y0+h>menuBox.y){     // que no se encime con el menú del edificio
+    y0=menuBox.y+menuBox.h+5*S;
+    if(y0+h>vy1-4*S)y0=menuBox.y-h-5*S;
+  }
+  rrect(x0,y0,w,h,5*S);ctx.fillStyle='rgba(30,35,24,.93)';ctx.fill();
+  ctx.strokeStyle=pinned?'#ffd60a':'#8a8f66';ctx.lineWidth=1.2*S;ctx.stroke();
+  list.forEach(function(u,n){
+    var ry=y0+pad+n*rh,cx=x0+pad+10*S,cy=ry+rh/2,col=COL[u.team],T=TYPES[u.type],amb=u.type==='amb';
+    if(u.sel){rrect(x0+pad*0.5,ry+1*S,w-pad,rh-2*S,3*S);ctx.fillStyle='rgba(255,214,10,.2)';ctx.fill();}
+    ctx.fillStyle=amb?col.fill:u.type==='cmd'?'#ffd60a':'#e9e3c4';ctx.beginPath();ctx.arc(cx,cy,8.6*S,0,6.2832);ctx.fill();
+    ctx.fillStyle=amb?'#efe9cf':(u.type==='tank'||u.type==='art')?col.dark:col.fill;ctx.beginPath();ctx.arc(cx,cy,7.2*S,0,6.2832);ctx.fill();
+    icon(u.type,cx,cy,(u.type==='inf'?0.56:u.type==='amb'?0.56:0.47)*S,u.team,amb?'#c22a20':col.dark);
+    var bx=cx+13*S,bw=rw-23*S-pad,f=Math.max(0,Math.min(1,u.hp/T.hp));
+    ctx.fillStyle='rgba(0,0,0,.6)';ctx.fillRect(bx,cy-2.2*S,bw,4.4*S);
+    ctx.fillStyle=f>0.6?'#7fd06a':f>0.3?'#ffd60a':'#ff6a5a';ctx.fillRect(bx,cy-2.2*S,bw*f,4.4*S);
+    if(pinned&&u.team===BLUE)stackRects.push({x:x0,y:ry,w:w,h:rh,u:u});
+  });
+}
+
+function drawMinimap(){
+  var dpr=Math.min(2,window.devicePixelRatio||1),chh=mmEl.clientHeight||86,cww=Math.round(chh*WX/WY);
+  var w=Math.round(cww*dpr),h=Math.round(chh*dpr),k,i,m=mmCtx;
+  if(mmEl.width!==w||mmEl.height!==h){mmEl.width=w;mmEl.height=h;mmEl.style.width=cww+'px';}
+  var sx=w/WX,sy=h/WY,cw=HW*sx+0.6,ch=1.5*HS*sy+0.6;
+  if(!mmCv)mmCv=document.createElement('canvas');
+  if(mmVer!==ownVer||mmCv.width!==w||mmCv.height!==h){      // fondo (terreno + territorio): solo cuando cambia
+    mmCv.width=w;mmCv.height=h;mmVer=ownVer;
+    var mc=mmCv.getContext('2d');
+    if(terrCv)mc.drawImage(terrCv,0,0,w,h);
+    for(k=0;k<NC;k++){
+      mc.fillStyle=own[k]>0?'rgba(30,100,255,.42)':'rgba(255,45,30,.42)';
+      mc.fillRect((hx[k]-HW/2)*sx,(hy[k]-0.75*HS)*sy,cw,ch);
+    }
+  }
+  m.setTransform(1,0,0,1,0,0);
+  m.drawImage(mmCv,0,0);
+  for(i=0;i<cities.length;i++){
+    var c=cities[i],q=c.type?2.5*dpr:3.5*dpr;
+    m.fillStyle=c.owner===NEUTRAL?'#e8e8dc':COL[c.owner].fill;m.strokeStyle=c.type?'#000':'#fff';m.lineWidth=dpr;
+    m.fillRect(c.x*sx-q,c.y*sy-q,2*q,2*q);m.strokeRect(c.x*sx-q,c.y*sy-q,2*q,2*q);
+  }
+  for(i=0;i<units.length;i++){
+    var u=units[i];
+    m.fillStyle=u.team===BLUE?'#bfe0ff':'#ffd0c8';m.beginPath();m.arc(u.x*sx,u.y*sy,1.8*dpr,0,6.2832);m.fill();
+  }
+  m.strokeStyle='#fff';m.lineWidth=1.5*dpr;
+  m.strokeRect(Math.max(0,view.ox)*sx,Math.max(0,view.oy)*sy,Math.min(WX,visW())*sx,Math.min(WY,visH())*sy);
+}
+
+function draw(){
+  // Fondo: la mesa de mapas (verde oliva oscuro con vetas), que se ve alrededor del tablero cuando se aleja la vista al máximo
+  ctx.setTransform(1,0,0,1,0,0);
+  if(!tableCv||tableCv.width!==cv.width||tableCv.height!==cv.height){
+    tableCv=document.createElement('canvas');tableCv.width=cv.width;tableCv.height=cv.height;
+    var tc=tableCv.getContext('2d'),tg=tc.createLinearGradient(0,0,0,cv.height);
+    tg.addColorStop(0,'#3a4129');tg.addColorStop(1,'#272c1c');tc.fillStyle=tg;tc.fillRect(0,0,cv.width,cv.height);
+    tc.strokeStyle='rgba(0,0,0,.13)';tc.lineWidth=1;
+    for(var ty=3;ty<cv.height;ty+=7){tc.beginPath();tc.moveTo(0,ty);tc.lineTo(cv.width,ty+((ty*7)%5)-2);tc.stroke();}
+  }
+  ctx.drawImage(tableCv,0,0);
+  if(needCenter){centerView();needCenter=false;}
+  var zs=scale*view.z;ctx.setTransform(zs,0,0,zs,-view.ox*zs,-view.oy*zs);
+  drawBoard();
+  var i,u;
+  cities.forEach(drawCity);
+  cities.forEach(function(o){             // avance de lo que se está fabricando
+    if(o.owner!==BLUE||!o.queue||!o.queue.length)return;      // solo las propias: lo que fabrica el enemigo no se ve
+    var pr=Math.min(1,o.bt/buildTime(o,o.queue[0]));
+    ctx.lineCap='butt';
+    ctx.strokeStyle='rgba(0,0,0,.55)';ctx.lineWidth=6*U;ctx.beginPath();ctx.arc(o.x,o.y,25*U,0,6.2832);ctx.stroke();
+    ctx.strokeStyle='#ffd60a';ctx.lineWidth=4*U;ctx.beginPath();ctx.arc(o.x,o.y,25*U,-1.5708,-1.5708+6.2832*pr);ctx.stroke();
+  });
+  // Puntos de reunión de las fábricas propias: un banderín amarillo; con el menú de esa fábrica abierto, también la línea
+  cities.forEach(function(o){
+    if(o.owner!==BLUE||!o.type||o.rally<0)return;
+    var rx=hx[o.rally],ry=hy[o.rally],on=menu===o;
+    if(on){
+      ctx.strokeStyle='rgba(255,214,10,.85)';ctx.lineWidth=2.2;ctx.setLineDash([7,6]);
+      ctx.beginPath();ctx.moveTo(o.x,o.y);ctx.lineTo(rx,ry);ctx.stroke();ctx.setLineDash([]);
+    }
+    ctx.globalAlpha=on?1:0.75;
+    ctx.fillStyle='rgba(0,0,0,.35)';ctx.beginPath();ctx.ellipse(rx,ry+9*U,6*U,2.2*U,0,0,6.2832);ctx.fill();
+    ctx.strokeStyle='#f1ecd2';ctx.lineWidth=2*U;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(rx,ry+9*U);ctx.lineTo(rx,ry-13*U);ctx.stroke();
+    ctx.fillStyle='#ffd60a';ctx.strokeStyle='#1b1400';ctx.lineWidth=1*U;
+    ctx.beginPath();ctx.moveTo(rx,ry-13*U);ctx.lineTo(rx+11*U,ry-9*U);ctx.lineTo(rx,ry-5*U);ctx.closePath();ctx.fill();ctx.stroke();
+    ctx.globalAlpha=1;
+  });
+  // Alcance de las fichas elegidas: círculo punteado (amarillo: hasta dónde tira; rojo: zona pegada donde la artillería no puede tirar;
+  // verde: hasta dónde cura el médico; dorado: hasta dónde llega el bonus del comandante)
+  var rz=1/(scale*view.z);
+  function ring(u,R,stroke,fill){
+    ctx.beginPath();ctx.arc(u.x,u.y,R,0,6.2832);
+    if(fill){ctx.fillStyle=fill;ctx.fill();}
+    ctx.strokeStyle=stroke;ctx.stroke();
+  }
+  ctx.lineWidth=1.5*rz;ctx.setLineDash([7*rz,5*rz]);
+  units.forEach(function(u){
+    if(!u.sel||u.team!==BLUE)return;
+    var T=TYPES[u.type];
+    if(u.type==='amb')ring(u,HOSP_R+HW*0.38,'rgba(120,230,130,.85)','rgba(120,230,130,.06)');
+    else if(u.type==='cmd')ring(u,CMD_R+HW*0.38,'rgba(255,214,10,.9)','rgba(255,214,10,.06)');
+    else{
+      ring(u,T.range+HW*0.38,'rgba(255,240,170,.8)','rgba(255,240,170,.045)');
+      if(T.minRange)ring(u,T.minRange-HW*0.38,'rgba(255,90,70,.9)','rgba(255,90,70,.1)');
+    }
+  });
+  ctx.setLineDash([]);
+  // Flechas de las órdenes: se ven 10 segundos y desaparecen; vuelven al seleccionar la ficha
+  for(i=0;i<units.length;i++){
+    u=units[i];
+    if(u.team!==BLUE||(u.dc<0&&!u.focus))continue;
+    var age=u.sel?0:time-u.ordT;if(age>=10)continue;   // seleccionada: siempre muestra su flecha
+    var red=!!u.focus;
+    var ex=red?u.focus.x:hx[u.dc],ey=red?u.focus.y:hy[u.dc],ax=ex-u.x,ay=ey-u.y,al=Math.sqrt(ax*ax+ay*ay);
+    if(al<12)continue;
+    ax/=al;ay/=al;
+    ctx.globalAlpha=Math.min(1,10-age)*0.85;
+    ctx.strokeStyle=ctx.fillStyle=red?'#ff5a4d':'#fff';ctx.lineWidth=2.5;ctx.lineCap='round';ctx.setLineDash([8,7]);
+    ctx.beginPath();ctx.moveTo(u.x,u.y);ctx.lineTo(ex-ax*12,ey-ay*12);ctx.stroke();ctx.setLineDash([]);
+    ctx.beginPath();ctx.moveTo(ex,ey);ctx.lineTo(ex-ax*15-ay*8,ey-ay*15+ax*8);ctx.lineTo(ex-ax*15+ay*8,ey-ay*15-ax*8);ctx.closePath();ctx.fill();
+    ctx.globalAlpha=1;
+  }
+  // Fichas en el mismo lugar (apiladas, quietas o viajando juntas): se dibujan en abanico con un cartel ×N
+  var stack={},seen={},key;
+  for(i=0;i<units.length;i++){u=units[i];key=Math.round(u.x)+','+Math.round(u.y);stack[key]=(stack[key]||0)+1;}
+  for(i=0;i<units.length;i++){
+    u=units[i];key=Math.round(u.x)+','+Math.round(u.y);
+    var n=stack[key];
+    if(n>1){
+      var j=seen[key]||0;seen[key]=j+1;
+      var ox=(j-(n-1)/2)*11*U,rx=u.x;
+      u.x=rx+ox;drawUnit(u);u.x=rx;
+      if(j===n-1){
+        var bx=rx-19*U,by=u.y+19*U,tx='×'+n;
+        ctx.fillStyle='#ffd60a';ctx.beginPath();ctx.arc(bx,by,9.5*U,0,6.2832);ctx.fill();ctx.strokeStyle='#1b1400';ctx.lineWidth=1.5;ctx.stroke();
+        ctx.fillStyle='#1b1400';ctx.font='bold '+Math.round(11*U)+'px system-ui,Arial,sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+        ctx.fillText(tx,bx,by+0.5);
+      }
+    }else drawUnit(u);
+  }
+  for(i=0;i<fx.length;i++){
+    var f=fx[i],a=Math.max(0,f.t/f.d);
+    if(f.k==='shot'){
+      ctx.strokeStyle='rgba(255,236,110,'+a+')';ctx.lineWidth=f.w;ctx.lineCap='round';
+      ctx.beginPath();ctx.moveTo(f.x1,f.y1);ctx.lineTo(f.x2,f.y2);ctx.stroke();
+      if(f.w>2){ctx.fillStyle='rgba(255,170,60,'+a+')';ctx.beginPath();ctx.arc(f.x2,f.y2,6,0,6.2832);ctx.fill();}
+    }else if(f.k==='ring'){
+      ctx.strokeStyle=COL[f.team].edge;ctx.globalAlpha=a;ctx.lineWidth=3;
+      ctx.beginPath();ctx.arc(f.x,f.y,f.r+(1-a)*18,0,6.2832);ctx.stroke();ctx.globalAlpha=1;
+    }else if(f.k==='atk'){
+      ctx.strokeStyle='#ff3b2f';ctx.globalAlpha=a;ctx.lineWidth=3.5;
+      ctx.beginPath();ctx.arc(f.x,f.y,12+(1-a)*22,0,6.2832);ctx.stroke();ctx.globalAlpha=1;
+    }else if(f.k==='mark'){
+      ctx.strokeStyle='#ffd60a';ctx.globalAlpha=a;ctx.lineWidth=2.5;
+      ctx.beginPath();ctx.arc(f.x,f.y,9+(1-a)*20,0,6.2832);ctx.stroke();ctx.globalAlpha=1;
+    }
+  }
+  if(attackMode&&hover){
+    var he=enemyAt(hover);
+    if(he){ctx.strokeStyle='#ff3b2f';ctx.lineWidth=3.5;ctx.beginPath();ctx.arc(he.x,he.y,TYPES[he.type].R+7,0,6.2832);ctx.stroke();}
+  }
+  drawMenu();
+  stackRects=[];
+  {
+    if(stackPin>=0)drawStackPanel(stackPin,true);
+    else if(hover&&!drag&&!rdrag){
+      var hk2=hexAt(hover.x,hover.y);
+      if((hover.x-hx[hk2])*(hover.x-hx[hk2])+(hover.y-hy[hk2])*(hover.y-hy[hk2])<HS*HS)drawStackPanel(hk2,false);
+    }
+  }
+  if(drag&&drag.rect){
+    var x=Math.min(drag.x0,drag.x1),y=Math.min(drag.y0,drag.y1),w=Math.abs(drag.x1-drag.x0),h=Math.abs(drag.y1-drag.y0);
+    ctx.fillStyle='rgba(255,214,10,.15)';ctx.fillRect(x,y,w,h);
+    ctx.strokeStyle='#ffd60a';ctx.lineWidth=1.5;ctx.strokeRect(x,y,w,h);
+  }
+  drawMinimap();
+}
+
+// ---------- Marcador ----------
+function clock(){var s=Math.floor(time);return Math.floor(s/60)+':'+('0'+s%60).slice(-2);}
+function updateHud(){
+  var bc=0,rc=0,bu=0,ru=0,fl=fabCount();
+  cities.forEach(function(c){if(c.owner===BLUE)bc++;else if(c.owner===RED)rc++;});
+  units.forEach(function(u){if(u.team===BLUE)bu++;else ru++;});
+  $('bp').textContent=Math.round(pct[BLUE])+'%';$('rp').textContent=Math.round(pct[RED])+'%';
+  $('bc').textContent=fl[0];$('rc').textContent=fl[1];
+  $('bu').textContent=bu+'/'+bc*SUPPLY;$('ru').textContent=ru+'/'+rc*SUPPLY;
+  $('bg').textContent=$('hGold').textContent=Math.floor(gold[BLUE]);
+  $('hBp').textContent=$('bp').textContent;$('hRp').textContent=$('rp').textContent;
+  $('barBlue').style.width=pct[BLUE]+'%';
+  $('clock').textContent=clock();
+  var st;
+  if(over)st=over==='win'?'Ganaste':'Perdiste';
+  else st=(bonus&&time-bonus.t<6)?'+'+bonus.v+' oro por territorio':'';
+  $('status').textContent=st;
+}
+
+// ---------- Controles ----------
+function setPaused(p){
+  paused=p;
+  $('btnPause').textContent=p?'▶ SEGUIR (P)':'⏸ PAUSA (P)';
+  $('btnPause').classList.toggle('on',p);
+}
+$('btnPause').addEventListener('click',function(){setPaused(!paused);});
+$('btnLevel').addEventListener('click',function(){level=level%3+1;$('btnLevel').textContent='Dificultad: nivel '+level;});     // se aplica en el momento, sin reiniciar
+$('btnSpeed').addEventListener('click',function(){speed=speed%3+1;$('btnSpeed').textContent='Velocidad ×'+speed;});
+// Panel de abajo: se oculta y se vuelve a mostrar con la tirita de arriba del panel o con la tecla M
+function togglePanel(){
+  var h=$('panel').classList.toggle('hidden');
+  $('hTxt').textContent=h?'▴ mostrar panel (M)':'▾ ocultar panel (M)';
+  $('handle').classList.toggle('mini',h);
+  resize();
+}
+$('handle').addEventListener('click',togglePanel);
+// Menú desplegable (velocidad, reiniciar): se abre hacia arriba y se cierra al elegir o al tocar afuera
+$('btnMenu').addEventListener('click',function(e){e.stopPropagation();$('menuPop').classList.toggle('open');});
+document.addEventListener('pointerdown',function(e){if(!$('menuWrap').contains(e.target))$('menuPop').classList.remove('open');});
+$('btnAtk').addEventListener('click',function(){setAttack(!attackMode);});
+$('btnRestart').addEventListener('click',function(){$('menuPop').classList.remove('open');init(true);setPaused(false);});
+$('btnMap').addEventListener('click',function(){mapN=mapN%MAPS+1;init(true);setPaused(false);});     // el menú queda abierto para ir pasando de mapa
+// Elegir un mapa por número: la grilla 1..20 del menú
+var mapBtns=[];
+(function(){
+  for(var n=1;n<=MAPS;n++){
+    var b=document.createElement('button');b.textContent=n;b.title='Jugar el mapa '+n;
+    b.addEventListener('click',(function(m){return function(){mapN=m;init(true);setPaused(false);$('menuPop').classList.remove('open');};})(n));
+    $('mapGrid').appendChild(b);mapBtns.push(b);
+  }
+})();
+$('btnAgain').addEventListener('click',function(){init();setPaused(false);});
+
+function pos(e){
+  var r=cv.getBoundingClientRect();
+  var f=cv.width/r.width,zs=scale*view.z;
+  return {x:(e.clientX-r.left)*f/zs+view.ox,y:(e.clientY-r.top)*f/zs+view.oy};
+}
+function unitAt(p){
+  var best=null,bd=1e18;
+  units.forEach(function(u){
+    if(u.team!==BLUE)return;
+    var R=TYPES[u.type].R+8,dd=d2(u,p);
+    if(dd<=R*R&&(dd<bd-1||(best&&Math.abs(dd-bd)<=1&&u.id>best.id))){bd=dd;best=u;}
+  });
+  return best;
+}
+function enemyAt(p){
+  var best=null,bd=1e18;
+  units.forEach(function(u){
+    if(u.team===BLUE)return;
+    var R=TYPES[u.type].R+8,dd=d2(u,p);
+    if(dd<=R*R&&dd<bd){bd=dd;best=u;}
+  });
+  return best;
+}
+// Puntero de ataque: una mira roja bien visible
+var ATK_CURSOR=(function(){
+  var svg='<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40">'+
+    '<g fill="none" stroke="#fff" stroke-width="7" stroke-linecap="round"><circle cx="20" cy="20" r="11"/><path d="M20 2v10M20 28v10M2 20h10M28 20h10"/></g>'+
+    '<g fill="none" stroke="#e8170c" stroke-width="3.6" stroke-linecap="round"><circle cx="20" cy="20" r="11"/><path d="M20 2v10M20 28v10M2 20h10M28 20h10"/></g>'+
+    '<circle cx="20" cy="20" r="2.6" fill="#e8170c" stroke="#fff" stroke-width="1.2"/></svg>';
+  return 'url("data:image/svg+xml,'+encodeURIComponent(svg)+'") 20 20, crosshair';
+})();
+// La mira aparece en modo ataque, y también al pasar sobre un enemigo con fichas seleccionadas (click derecho = atacar)
+function updCursor(){
+  if(locked()&&document.elementFromPoint(vcur.x,vcur.y)!==cv){if(fakeCur.className)fakeCur.className='';return;}   // sobre el panel: flecha común
+  var atk=attackMode;
+  if(!atk&&hover&&enemyAt(hover))atk=units.some(function(u){return u.sel&&u.team===BLUE;});
+  var c=atk?ATK_CURSOR:'default';
+  if(cv.style.cursor!==c)cv.style.cursor=c;
+  if(fakeCur.className!==(atk?'atk':''))fakeCur.className=atk?'atk':'';
+}
+function setAttack(v){
+  attackMode=v&&!over;
+  $('btnAtk').classList.toggle('on',attackMode);
+  $('btnAtk').textContent=attackMode?'⚔ Elegí el blanco…':'⚔ ATACAR (X)';
+  updCursor();
+}
+// Orden de ataque: las fichas elegidas van hacia donde está esa ficha enemiga y le disparan a ella primero.
+// No la persiguen: si el blanco cambia de hexágono, terminan de llegar al lugar original y se quedan ahí.
+function attackOrder(target){
+  var list=units.filter(function(u){return u.sel&&u.team===BLUE&&u.type!=='amb';});
+  if(!list.length||over)return false;
+  order(list,target.x,target.y);
+  list.forEach(function(u){u.focus=target;u.dis=false;});
+  fx.push({k:'atk',x:target.x,y:target.y,t:0.7,d:0.7});
+  units.forEach(function(u){u.sel=false;});stackPin=-1;
+  return true;
+}
+function moveOrder(p){
+  var list=units.filter(function(u){return u.sel&&u.team===BLUE;});
+  if(!list.length||over)return;
+  list.forEach(function(u){u.focus=null;});stackPin=-1;menu=null;
+  var k=hexAt(p.x,p.y);
+  order(list,hx[k],hy[k]);
+  fx.push({k:'mark',x:hx[k],y:hy[k],t:0.6,d:0.6});
+  list.forEach(function(u){u.sel=false;});   // dada la orden, se deselecciona
+}
+cv.addEventListener('pointerdown',function(e){
+  e.preventDefault();
+  var p=pos(e);
+  if(e.button===2){                              // botón derecho: solo órdenes (destino, ataque, menú del edificio, punto de reunión)
+    try{cv.setPointerCapture(e.pointerId);}catch(err){}
+    rdrag={x:e.clientX,y:e.clientY,moved:false,id:e.pointerId};return;
+  }
+  if(e.button!==0)return;
+  try{cv.setPointerCapture(e.pointerId);}catch(err){}
+  // Arrastre con el botón izquierdo: dibuja el rectángulo de selección (con Shift, suma a lo ya elegido).
+  // El mapa se mueve llevando el mouse a un borde de la ventana, con las flechas, con el botón del medio o en el minimapa.
+  drag={x0:p.x,y0:p.y,x1:p.x,y1:p.y,rect:false,shift:e.shiftKey,id:e.pointerId};
+});
+cv.addEventListener('pointermove',function(e){
+  hover=pos(e);
+  if(rdrag&&e.pointerId===rdrag.id)return;
+  if(!drag||e.pointerId!==drag.id)return;
+  var p=pos(e);drag.x1=p.x;drag.y1=p.y;
+  if(Math.abs(p.x-drag.x0)>8||Math.abs(p.y-drag.y0)>8)drag.rect=true;
+});
+cv.addEventListener('pointerup',function(e){
+  if(rdrag&&e.pointerId===rdrag.id&&e.button===2){
+    var rd=rdrag;rdrag=null;
+    if(!rd.moved){
+      var rp=pos(e),re=enemyAt(rp);
+      var rfab=ownFabAt(rp),rsel=units.filter(function(u){return u.sel&&u.team===BLUE;});
+      if(menu&&menuBox&&rp.x>=menuBox.x&&rp.x<=menuBox.x+menuBox.w&&rp.y>=menuBox.y&&rp.y<=menuBox.y+menuBox.h){}   // sobre el menú abierto: nada
+      else if(attackMode&&!re)setAttack(false);
+      else if(re&&attackOrder(re))setAttack(false);       // click derecho sobre un enemigo: atacarlo
+      else if(rfab&&(!rsel.length||rsel.every(function(u){return u.c===rfab.k;}))){
+        if(menu===rfab&&rfab.rally>=0)rfab.rally=-1;        // con el menú ya abierto: otro click derecho en la fábrica quita el punto de reunión
+        menu=rfab;stackPin=-1;                              // sobre una fábrica propia: menú de producción
+      }
+      else if(menu&&!rsel.length&&cities.indexOf(menu)>=0&&menu.owner===BLUE){   // menú abierto y nada elegido: click derecho en el mapa = punto de reunión
+        var rk=hexAt(rp.x,rp.y);menu.rally=rk===menu.k?-1:rk;
+        fx.push({k:'mark',x:hx[rk],y:hy[rk],t:0.6,d:0.6});
+      }
+      else moveOrder(rp);
+    }
+    return;
+  }
+  if(!drag||e.pointerId!==drag.id)return;
+  var g=drag;drag=null;
+  var p=pos(e);
+  if(g.rect){
+    var x0=Math.min(g.x0,p.x),x1=Math.max(g.x0,p.x),y0=Math.min(g.y0,p.y),y1=Math.max(g.y0,p.y);
+    units.forEach(function(u){
+      if(u.team!==BLUE)return;
+      var inside=u.x>=x0&&u.x<=x1&&u.y>=y0&&u.y<=y1;
+      u.sel=inside||(g.shift&&u.sel);
+    });
+    return;
+  }
+  if(attackMode){                                // modo ataque: click sobre la ficha enemiga a atacar
+    var at=enemyAt(p);
+    if(at)attackOrder(at);
+    setAttack(false);
+    return;
+  }
+  // ¿click en un botón del menú de fábrica?
+  for(var mi=0;mi<menuRects.length;mi++){
+    var m=menuRects[mi];
+    if(p.x>=m.x&&p.x<=m.x+m.w&&p.y>=m.y&&p.y<=m.y+m.h){if(m.cancel!==undefined)cancelBuild(menu,m.cancel);else buy(m.type);return;}
+  }
+  if(menuBox&&p.x>=menuBox.x&&p.x<=menuBox.x+menuBox.w&&p.y>=menuBox.y&&p.y<=menuBox.y+menuBox.h)return;   // click dentro del menú, fuera de los botones
+  // ¿click en una ficha del panel de pila? -> elegir exactamente esa (también la de abajo del todo)
+  for(var si=0;si<stackRects.length;si++){
+    var sr=stackRects[si];
+    if(p.x>=sr.x&&p.x<=sr.x+sr.w&&p.y>=sr.y&&p.y<=sr.y+sr.h){
+      if(g.shift)sr.u.sel=!sr.u.sel;else units.forEach(function(v){v.sel=v===sr.u;});
+      return;
+    }
+  }
+  var u=unitAt(p);                              // click izquierdo: seleccionar
+  stackPin=(u&&stackUnits(u.c).length>1&&u.x===hx[u.c]&&u.y===hy[u.c])?u.c:-1;   // click en una pila: fija su panel
+  // click en una fábrica propia: abre su menú para elegir qué fabricar
+  var fab=null;
+  cities.forEach(function(c){if(c.owner===BLUE&&c.type&&d2(c,p)<24*U*24*U)fab=c;});
+  var touchMove=e.pointerType==='touch'&&!u&&units.some(function(v){return v.sel;});
+  menu=fab&&!touchMove&&(!u||e.pointerType==='touch')?fab:null;
+  if(fab&&!u&&!touchMove){units.forEach(function(v){v.sel=false;});return;}
+  if(u){
+    var now=performance.now();
+    if(lastClick.id===u.id&&now-lastClick.t<380){
+      var vx0=view.ox,vy0=view.oy,vx1=view.ox+visW(),vy1=view.oy+visH();     // doble click: todas las de ese tipo que se ven en pantalla
+      units.forEach(function(v){var on=v.team===BLUE&&v.type===u.type&&v.x>=vx0&&v.x<=vx1&&v.y>=vy0&&v.y<=vy1;v.sel=g.shift?(v.sel||on):on;});
+    }else if(g.shift)u.sel=!u.sel;
+    else units.forEach(function(v){v.sel=v===u;});
+    lastClick={id:u.id,t:now};
+  }else if(e.pointerType==='touch')moveOrder(p);          // en pantalla táctil no hay botón derecho
+  else if(!g.shift)units.forEach(function(v){v.sel=false;});
+});
+cv.addEventListener('pointercancel',function(){drag=null;pan=null;rdrag=null;});
+// Zoom con la rueda (hacia el cursor); paneo con el botón del medio o las flechas
+// La vista nunca se sale del tablero; si el tablero entra entero en algún sentido, queda centrado
+function visW(){return cv.width/(scale*view.z);}
+function visH(){return cv.height/(scale*view.z);}
+// Zoom mínimo: el mapa entero a la vista (si no tiene la forma de la pantalla, alrededor se ve la mesa).
+function zmin(){return 1;}
+function clampView(){
+  if(view.z<zmin())view.z=zmin();
+  var w=visW(),h=visH();
+  view.ox=w>=WX?(WX-w)/2:Math.max(0,Math.min(WX-w,view.ox));
+  view.oy=h>=WY?(WY-h)/2:Math.max(0,Math.min(WY-h,view.oy));
+}
+// Al empezar: acercado sobre tus fábricas
+function centerView(){
+  // zoom inicial: entran unas 22 columnas a lo ancho de la ventana, así las fichas se ven de buen tamaño
+  view.z=Math.max(zmin(),Math.min(ZMAX,cv.width/(scale*(VIEW_COLS+0.5)*HW)));
+  var fx0=0,fy0=0;FABS.forEach(function(k){fx0+=hx[k]/FABS.length;fy0+=hy[k]/FABS.length;});
+  view.ox=fx0-visW()*0.42;view.oy=fy0-visH()/2;clampView();
+}
+function mmGo(e){               // click o arrastre en el minimapa: lleva la vista a ese punto
+  var r=mmEl.getBoundingClientRect();
+  view.ox=(e.clientX-r.left)/r.width*WX-visW()/2;view.oy=(e.clientY-r.top)/r.height*WY-visH()/2;clampView();
+}
+mmEl.addEventListener('pointerdown',function(e){e.preventDefault();mmDrag=true;try{mmEl.setPointerCapture(e.pointerId);}catch(err){}mmGo(e);});
+mmEl.addEventListener('pointermove',function(e){if(mmDrag)mmGo(e);});
+mmEl.addEventListener('pointerup',function(){mmDrag=false;});
+mmEl.addEventListener('pointercancel',function(){mmDrag=false;});
+mmEl.addEventListener('contextmenu',function(e){e.preventDefault();});
+cv.addEventListener('wheel',function(e){
+  e.preventDefault();
+  var r=cv.getBoundingClientRect(),p=pos(e);
+  view.z=Math.max(zmin(),Math.min(ZMAX,view.z*(e.deltaY<0?1.15:1/1.15)));
+  var f2=cv.width/r.width,zs2=scale*view.z;
+  view.ox=p.x-(e.clientX-r.left)*f2/zs2;
+  view.oy=p.y-(e.clientY-r.top)*f2/zs2;
+  clampView();
+},{passive:false});
+cv.addEventListener('pointerdown',function(e){if(e.button===1){e.preventDefault();pan={x:e.clientX,y:e.clientY};}});
+window.addEventListener('pointermove',function(e){
+  if(!pan)return;
+  view.ox-=(e.clientX-pan.x)*wpp();view.oy-=(e.clientY-pan.y)*wpp();
+  pan.x=e.clientX;pan.y=e.clientY;clampView();
+});
+window.addEventListener('pointerup',function(e){if(e.button===1)pan=null;});
+// Nada de menú del navegador, selección ni arrastre de imagen sobre el mapa
+['contextmenu','selectstart','dragstart','gesturestart'].forEach(function(ev){
+  $('map').addEventListener(ev,function(e){e.preventDefault();});
+});
+$('map').addEventListener('touchstart',function(e){if(e.target===cv)e.preventDefault();},{passive:false});
+// Teclado, al estilo de los juegos de estrategia:
+//   flechas: mover la vista (parejo, mientras estén apretadas)      P: pausa        X: atacar        M: esconder el panel
+//   Ctrl+1..9: guardar las fichas elegidas como grupo    1..9: elegir ese grupo    1..9 dos veces: llevar la vista al grupo
+//   Espacio: centrar la vista en lo elegido     H: ir al cuartel     F: ir pasando por las fábricas     coma u O: próxima ficha ociosa
+//   A: elegir todas     Escape: soltar la selección y cerrar menús     F11 o el botón: pantalla completa
+var keys={}, groups={}, lastGroup={n:0,t:0}, cycle={fab:0,idle:0};
+function lookAt(x,y){view.ox=x-visW()/2;view.oy=y-visH()/2;clampView();}
+function lookAtList(list){
+  if(!list.length)return;
+  var x=0,y=0;list.forEach(function(u){x+=u.x/list.length;y+=u.y/list.length;});
+  lookAt(x,y);
+}
+window.addEventListener('keydown',function(e){
+  var k=e.key,low=k.length===1?k.toLowerCase():k;
+  if(k.indexOf('Arrow')===0){e.preventDefault();keys[k]=true;return;}
+  if(e.code&&e.code.indexOf('Digit')===0&&e.code!=='Digit0'){            // grupos
+    e.preventDefault();
+    var n=+e.code.slice(5),now=performance.now();
+    if(e.ctrlKey||e.metaKey){groups[n]=units.filter(function(u){return u.sel&&u.team===BLUE;}).map(function(u){return u.id;});return;}
+    var ids=groups[n]||[],list=units.filter(function(u){return u.team===BLUE&&ids.indexOf(u.id)>=0;});
+    if(!list.length)return;
+    units.forEach(function(u){u.sel=list.indexOf(u)>=0;});menu=null;stackPin=-1;
+    if(lastGroup.n===n&&now-lastGroup.t<450)lookAtList(list);
+    lastGroup={n:n,t:now};
+    return;
+  }
+  if(e.ctrlKey||e.metaKey||e.altKey)return;
+  if(low==='p'){e.preventDefault();setPaused(!paused);}
+  else if(e.code==='Space'){e.preventDefault();lookAtList(units.filter(function(u){return u.sel&&u.team===BLUE;}));}
+  else if(low==='a')units.forEach(function(u){u.sel=u.team===BLUE;});
+  else if(low==='x')setAttack(!attackMode);
+  else if(low==='m')togglePanel();
+  else if(low==='h'||low==='f'){                                         // saltar a los edificios propios
+    var bs=cities.filter(function(c){return c.owner===BLUE&&c.type===(low==='h'?'hq':'fab');});
+    if(!bs.length)return;
+    var b=bs[low==='h'?0:(cycle.fab++)%bs.length];
+    lookAt(b.x,b.y);
+  }
+  else if(low===','||low==='o'){                                         // próxima ficha ociosa (quieta, sin pelear, y no médico)
+    var idle=units.filter(function(u){return u.team===BLUE&&u.dc<0&&!u.fight&&u.type!=='amb';});
+    if(!idle.length)return;
+    var it=idle[(cycle.idle++)%idle.length];
+    units.forEach(function(u){u.sel=u===it;});menu=null;stackPin=-1;lookAt(it.x,it.y);
+  }
+  else if(k==='Escape'){stackPin=-1;menu=null;units.forEach(function(u){u.sel=false;});setAttack(false);}
+});
+window.addEventListener('keyup',function(e){keys[e.key]=false;});
+window.addEventListener('blur',function(){keys={};mouse.inside=false;});
+// El mouse se sigue en toda la ventana (también sobre el panel), para que los bordes funcionen como en un juego a pantalla completa
+window.addEventListener('pointermove',function(e){if(e.pointerType!=='touch'){mouse.x=e.clientX;mouse.y=e.clientY;mouse.inside=true;}});
+document.addEventListener('mouseleave',function(){mouse.inside=false;});
+// Pantalla completa: ahí el mouse no se puede salir y los bordes mueven el mapa sin fallar; se sale con Escape
+function isFull(){return !!(document.fullscreenElement||document.webkitFullscreenElement);}
+function toggleFull(){
+  var d=document,el=d.documentElement;
+  if(isFull()){if(d.pointerLockElement)d.exitPointerLock();(d.exitFullscreen||d.webkitExitFullscreen).call(d);}
+  else{var rq=el.requestFullscreen||el.webkitRequestFullscreen;if(rq)rq.call(el);grabMouse();}
+}
+$('btnFull').addEventListener('click',toggleFull);
+document.addEventListener('fullscreenchange',function(){
+  $('btnFull').textContent=isFull()?'⤡':'⛶';
+  if(isFull())grabMouse();
+  else if(document.pointerLockElement)document.exitPointerLock();
+});
+
+// ---------- Mouse capturado ----------
+// En pantalla completa el juego "captura" el mouse (Pointer Lock): la flecha del sistema se esconde y no puede irse a otro monitor.
+// La flecha que se ve la dibuja el juego (#fakeCur) y se mueve solo dentro de la ventana. Con Escape se libera (y se sale de pantalla completa).
+// Mientras está capturado, el navegador manda todos los eventos al mapa con una posición fija; acá se les pone la posición de la flecha
+// del juego, y si la flecha está sobre el panel (botones, minimapa) el click se le pasa a lo que haya debajo.
+var vcur={x:0,y:0,down:null,mm:false}, fakeCur=$('fakeCur');
+function locked(){return document.pointerLockElement===cv;}
+function grabMouse(){
+  if(!cv.requestPointerLock||locked())return;
+  try{var pr=cv.requestPointerLock();if(pr&&pr.catch)pr.catch(function(){});}catch(err){}
+}
+document.addEventListener('pointerlockchange',function(){
+  var on=locked();
+  if(on){vcur.x=mouse.x||window.innerWidth/2;vcur.y=mouse.y||window.innerHeight/2;vcur.down=null;vcur.mm=false;moveFake();}
+  fakeCur.style.display=on?'block':'none';
+  document.body.classList.toggle('grab',on);
+});
+function moveFake(){fakeCur.style.transform='translate('+vcur.x+'px,'+vcur.y+'px)';}
+function synth(type,e){return new PointerEvent(type,{clientX:vcur.x,clientY:vcur.y,button:e.button,buttons:e.buttons,pointerId:e.pointerId,pointerType:'mouse',bubbles:true,cancelable:true});}
+function lockFix(e){
+  if(!locked()||!e.isTrusted)return;             // (los eventos que fabrica esta misma función pasan de largo)
+  if(e.type==='pointermove'){
+    vcur.x=Math.max(0,Math.min(window.innerWidth-1,vcur.x+e.movementX));
+    vcur.y=Math.max(0,Math.min(window.innerHeight-1,vcur.y+e.movementY));
+    moveFake();
+  }
+  Object.defineProperty(e,'clientX',{value:vcur.x});Object.defineProperty(e,'clientY',{value:vcur.y});
+  mouse.x=vcur.x;mouse.y=vcur.y;mouse.inside=true;
+  if(e.type==='wheel')return;
+  var el=document.elementFromPoint(vcur.x,vcur.y);
+  if(vcur.mm){                                         // arrastrando sobre el minimapa: todo va al minimapa hasta soltar
+    e.stopImmediatePropagation();
+    mmEl.dispatchEvent(synth(e.type,e));
+    if(e.type==='pointerup'||e.type==='pointercancel')vcur.mm=false;
+    return;
+  }
+  if(!el||el===cv||drag||rdrag||pan)return;             // sobre el mapa (o en medio de un arrastre del mapa): sigue su camino normal
+  e.stopImmediatePropagation();
+  if(e.type==='pointerdown'){
+    if(el===mmEl){vcur.mm=true;mmEl.dispatchEvent(synth('pointerdown',e));}
+    else{
+      vcur.down=el;
+      if(!$('menuWrap').contains(el))$('menuPop').classList.remove('open');
+    }
+  }else if(e.type==='pointerup'){
+    var b=el.closest?el.closest('button,#handle'):null;
+    if(b&&vcur.down&&(vcur.down===b||b.contains(vcur.down))&&e.button===0)b.click();
+    vcur.down=null;
+  }
+}
+['pointerdown','pointermove','pointerup','pointercancel','wheel'].forEach(function(t){window.addEventListener(t,lockFix,true);});
+// Si no se llegó a capturar o se perdió y sigue en pantalla completa (por ejemplo al volver de otra ventana), cualquier click la recupera
+window.addEventListener('pointerdown',function(){if(isFull()&&!locked())grabMouse();},true);
+
+function resize(){
+  var r=cv.getBoundingClientRect(),dpr=Math.min(2,window.devicePixelRatio||1);
+  var px=Math.max(200,Math.round(r.width*dpr)),py=Math.max(100,Math.round(r.height*dpr));
+  if(cv.width!==px||cv.height!==py){cv.width=px;cv.height=py;}
+  scale=Math.min(px/WX,py/WY);
+  clampView();
+}
+// unidades del tablero por cada píxel de pantalla
+function wpp(){return (cv.width/cv.getBoundingClientRect().width)/(scale*view.z);}
+window.addEventListener('resize',resize);
+if(typeof ResizeObserver!=='undefined')new ResizeObserver(function(){resize();}).observe(document.getElementById('map'));
+
+var last=0;
+function frame(ts){
+  var dt=Math.min(0.05,(ts-last)/1000||0);last=ts;
+  if(!paused&&!over){for(var s=0;s<speed;s++)update(dt);}
+  // Mover la vista: con las flechas, o llevando el mouse a un borde de la ventana (22 px). Va a la misma velocidad en pantalla
+  // con cualquier zoom. Mientras se arrastra un recuadro de selección, los bordes siguen funcionando y el recuadro sigue al mouse.
+  if(visW()<WX||visH()<WY){
+    var vx=(keys.ArrowRight?1:0)-(keys.ArrowLeft?1:0),vy=(keys.ArrowDown?1:0)-(keys.ArrowUp?1:0);
+    if(!vx&&!vy&&mouse.inside&&!pan&&!mmDrag&&!rdrag&&document.hasFocus()){
+      var mg=22,ww=window.innerWidth,wh=window.innerHeight;
+      vx=mouse.x<mg?-1:mouse.x>ww-mg?1:0;vy=mouse.y<mg?-1:mouse.y>wh-mg?1:0;
+    }
+    if(vx||vy){
+      var sp=EDGE_SPEED*wpp()*dt;
+      view.ox+=vx*sp;view.oy+=vy*sp;clampView();
+      if(drag&&drag.rect){var mp=pos({clientX:mouse.x,clientY:mouse.y});drag.x1=mp.x;drag.y1=mp.y;}
+    }
+  }
+  updCursor();
+  draw();
+  requestAnimationFrame(frame);
+}
+(function(){var m=/(?:[#?&]|mapa=)(\d+)/.exec(location.hash+location.search);if(m&&+m[1]>=1&&+m[1]<=MAPS)mapN=+m[1];})();
+init(mapN>0);resize();
+requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
